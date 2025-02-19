@@ -1,6 +1,6 @@
 import { Button } from "antd";
 import UserLayout from "./components/UserLayout";
-
+import { ThemeProvider } from "@material-tailwind/react";
 export default function App() {
   return (
     <UserLayout>
