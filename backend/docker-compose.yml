@@ -1,0 +1,17 @@
+version: '3.8'  # กำหนดเวอร์ชันของ Docker Compose ที่ใช้ (3.8 เป็นเวอร์ชันที่รองรับฟีเจอร์ใหม่ๆ)
+
+services:  # กำหนด service ที่จะรันใน Docker (สามารถมีหลาย service เช่น MongoDB, Redis, API ฯลฯ)
+  mongo:  # ตั้งชื่อ service เป็น "mongo"
+    image: mongo  # ใช้ official Docker image ของ MongoDB (เวอร์ชันล่าสุด)
+    restart: always  # กำหนดให้ container restart ใหม่อัตโนมัติเมื่อเกิดข้อผิดพลาด หรือเมื่อ Docker รีสตาร์ท
+    environment:  # กำหนด environment variables เพื่อกำหนดค่าต่างๆ ให้กับ MongoDB
+      MONGO_INITDB_ROOT_USERNAME: root  # กำหนดชื่อ username สำหรับ MongoDB (ใช้สิทธิ์ root)
+      MONGO_INITDB_ROOT_PASSWORD: password  # กำหนดรหัสผ่านของ root user
+    ports:  # กำหนดพอร์ตสำหรับเชื่อมต่อ MongoDB ระหว่าง host และ container
+      - "27017:27017"  # เชื่อมต่อพอร์ต 27017 ของเครื่อง host กับพอร์ต 27017 ของ container (MongoDB ใช้พอร์ตนี้โดย default)
+    volumes:  # กำหนด volumes สำหรับเก็บข้อมูลของ MongoDB (เพื่อให้ข้อมูลไม่หายเมื่อปิด container)
+      - mongo-data:/data/db  # ใช้ volume ชื่อ "mongo-data" เพื่อเก็บ database ของ MongoDB ไว้ที่ `/data/db` ใน container
+
+volumes:  # กำหนด volume ที่จะใช้เก็บข้อมูลถาวร (Persistent Storage)
+  mongo-data:  # ชื่อของ volume
+    driver: local  # ใช้ local storage บนเครื่อง host เพื่อเก็บข้อมูลของ MongoDB
