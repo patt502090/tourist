@@ -255,24 +255,34 @@ export default function Problem() {
   const onClickHandler = async () => {
     if (!isLogedIn) {
       navigate('/signin');
+      return; // ให้หยุดการทำงานหากไม่ได้ล็อกอิน
     }
 
     if (editorRef.current && problemInfo) {
-      // @ts-ignore
-      const code = `${problemInfo.imports.find((s) => s.lang_id == language)?.code} \n${editorRef.current.getValue()} \n${problemInfo?.systemCode.find((s) => s.lang_id == language)?.code}`;
       try {
+        // ตรวจสอบ problemInfo และ arrays ก่อนใช้ .find()
+        const importCode = problemInfo.imports?.find((s) => s.lang_id == language)?.code ?? '';
+        const systemCode = problemInfo.systemCode?.find((s) => s.lang_id == language)?.code ?? '';
+
+        const code = `${importCode} \n${editorRef.current.getValue()} \n${systemCode}`;
+
         setIsSumbitted(true);
         setCurrentTab(1);
+
         const testcases = problemInfo?.testCases;
-        const [firsttestcase] = testcases;
-        const response = await mutateAsync({
-          code,
-          expected_output: firsttestcase.output,
-          input: firsttestcase.input,
-          language_id: language,
-        });
-        setSubmissionId(response?.data.token);
-        await getSubmission(response?.data.token);
+        if (testcases && testcases.length > 0) {
+          const [firsttestcase] = testcases;
+          const response = await mutateAsync({
+            code,
+            expected_output: firsttestcase.output,
+            input: firsttestcase.input,
+            language_id: language,
+          });
+          setSubmissionId(response?.data.token);
+          await getSubmission(response?.data.token);
+        } else {
+          console.log('No test cases available');
+        }
       } catch (error) {
         setIsSumbitted(false);
         console.log(error);
@@ -284,43 +294,62 @@ export default function Problem() {
     if (!isLogedIn) {
       navigate('/signin');
     }
+
     if (editorRef.current && problemInfo) {
       const submissionbatch = [];
       const testcases = problemInfo?.testCases;
-      // @ts-ignore
-      const code = `${problemInfo.imports.find((s) => s.lang_id == language)?.code} \n ${editorRef.current.getValue()} \n ${problemInfo?.systemCode.find((s) => s.lang_id == language)?.code}`;
-      if (testcases?.length) {
-        for (let index = 0; index < testcases?.length; index++) {
-          if (testcases) {
-            const { input, output } = testcases[index];
-            submissionbatch.push({
-              language_id: language,
-              source_code: code,
-              stdin: input,
-              expected_output: output,
-            });
-          }
-        }
+
+      // ตรวจสอบว่า imports และ systemCode มีค่าหรือไม่ก่อนเรียก .find()
+      const importCode = problemInfo.imports?.find((s) => s.lang_id == language)?.code ?? '';
+      const systemCode = problemInfo.systemCode?.find((s) => s.lang_id == language)?.code ?? '';
+
+      // ถ้าไม่พบข้อมูลให้แจ้งเตือน
+      if (!importCode || !systemCode) {
+        console.log('Code snippets not found for the selected language');
       }
+
+      const code = `${importCode} \n ${editorRef.current.getValue()} \n ${systemCode}`;
+
+      if (!testcases || testcases.length === 0) {
+        console.log('No test cases found');
+        return;
+      }
+
+      for (let index = 0; index < testcases.length; index++) {
+        const { input, output } = testcases[index];
+        submissionbatch.push({
+          language_id: language,
+          source_code: code,
+          stdin: input,
+          expected_output: output,
+        });
+      }
+
       try {
         setCurrentTab(2);
         setProblemSubmissionLoading(true);
+
+        // ส่งข้อมูล batchwise
+        console.log('Sending submission batch:', submissionbatch);
         const batchwiseresponse = await batchwiseSubmission(submissionbatch);
-        // @ts-ignore
-        const batchwiseresponsepromises = [];
-        batchwiseresponse?.forEach((submission) => {
-          batchwiseresponsepromises.push(getSubmission(submission.token));
-        });
-        // @ts-ignore
+
+        // ตรวจสอบการตอบกลับจาก API
+        if (!batchwiseresponse) {
+          console.log('No response from batchwise submission');
+          setProblemSubmissionLoading(false);
+          return;
+        }
+
+        const batchwiseresponsepromises = batchwiseresponse.map((submission) => getSubmission(submission.token));
+
         const batchwiseresults = await Promise.all(batchwiseresponsepromises);
         setProblemSubmissionLoading(false);
+
         const { status, successcount } = getResult(batchwiseresults);
         setSuccessCount(successcount);
-        if (status) {
-          setProblemSubmissionStatus('Accepted');
-        } else {
-          setProblemSubmissionStatus('Rejected');
-        }
+
+        setProblemSubmissionStatus(status ? 'Accepted' : 'Rejected');
+
         const updatesubmissionbody = {
           problemId: problemname?.slice(0, 24) as string,
           languageId: language,
@@ -328,10 +357,12 @@ export default function Problem() {
           submissionId: submissionId,
           submittedAt: new Date(),
         };
+
         const submissionupdateResponse = await updateSubmitMutateAsync({
           id: user?._id as string,
           newsubmission: updatesubmissionbody,
         });
+
         setProblemSubmissions((prev) => [...prev, updatesubmissionbody]);
         setUser({
           ...(user as user),
@@ -349,6 +380,13 @@ export default function Problem() {
       } catch (error) {
         setProblemSubmissionLoading(false);
         setProblemSubmissionStatus('Rejected');
+
+        if (error?.response) {
+          console.error('API error response:', error.response.data); // ตรวจสอบข้อผิดพลาดที่ได้รับจาก API
+        } else {
+          console.error('Unexpected error:', error);
+        }
+
         await updateSubmitMutateAsync({
           id: user?._id as string,
           newsubmission: {
@@ -359,6 +397,7 @@ export default function Problem() {
             submittedAt: new Date(),
           },
         });
+
         setProblemSubmissions((prev) => [
           ...prev,
           {
