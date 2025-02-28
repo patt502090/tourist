@@ -1,9 +1,9 @@
 # Define build arguments
 ARG NODE_ENV="local"
 ARG FRONTEND_ORIGIN="http://localhost:3000"
-ARG MONGODB_CONNECTION_STRING=""
-ARG JWT_SECRET=""
-ARG DOMAIN=""
+ARG MONGODB_CONNECTION_STRING="mongodb://localhost:27017/leetcode"
+ARG JWT_SECRET="7d3f2e1b9c8a5d4f6e3b2a1c9d8e7f6b5a4d3c2b1e9f8d7"
+ARG DOMAIN="localhost"
 
 # Stage 1: Development
 FROM node:20 AS development
