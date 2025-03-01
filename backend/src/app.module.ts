@@ -8,6 +8,7 @@ import { config } from './config/config';
 import { AuthModule } from './auth/auth.module';
 import { RetrytokenModule } from './retrytoken/retrytoken.module';
 import { SessiontokenModule } from './sessiontoken/sessiontoken.module';
+import { ContestsModule } from './contests/contests.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { SessiontokenModule } from './sessiontoken/sessiontoken.module';
     RetrytokenModule,
     AuthModule,
     SessiontokenModule,
+    ContestsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

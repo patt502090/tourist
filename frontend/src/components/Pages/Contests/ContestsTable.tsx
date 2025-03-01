@@ -7,22 +7,19 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TablePagination from '@mui/material/TablePagination';
 import Paper from '@mui/material/Paper';
-import { Problem } from '../../../utils/types';
+import { Contest } from '../../../utils/types';
 import { styled } from '@mui/material/styles';
 import { usethemeUtils } from '../../../context/ThemeWrapper';
 import { Container, IconButton, SelectChangeEvent } from '@mui/material';
 import { Table as TableType } from '@tanstack/react-table';
-import TablePaginationActions from '@mui/material/TablePagination/TablePaginationActions';
 import RestartAltOutlinedIcon from '@mui/icons-material/RestartAltOutlined';
-import DifficultyFilter from '../Problems/DifficultyFilter';
 import StatusFilter from '../Problems/StatusFilter';
 import ProblemSearch from '../Problems/ProblemSearch';
+import TablePaginationActions from '../Problems/ProblemTableActions';
 
 function ContestsTable({
   data,
   table,
-  handleDifficultChange,
-  difficultyFilter,
   statusFilter,
   handleStatusChange,
   searchQuery,
@@ -30,8 +27,8 @@ function ContestsTable({
   clear,
   reset,
 }: {
-  data: Problem[];
-  table: TableType<Problem>;
+  data: Contest[];
+  table: TableType<Contest>;
   handleDifficultChange: (event: SelectChangeEvent) => void;
   difficultyFilter: string;
   statusFilter: string;
@@ -58,7 +55,6 @@ function ContestsTable({
     <Container maxWidth='lg' sx={{ maxHeight: '75dvh', overflowY: 'auto', scrollbarWidth: 'thin' }}>
       <div className='tw-flex tw-justify-between'>
         <div className='tw-flex'>
-          <DifficultyFilter value={difficultyFilter} handleChange={handleDifficultChange}></DifficultyFilter>
           <StatusFilter value={statusFilter} handleChange={handleStatusChange}></StatusFilter>
         </div>
         <div className='tw-flex'>

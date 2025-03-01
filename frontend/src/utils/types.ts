@@ -27,6 +27,20 @@ export interface Problem {
   metadata: metadata;
   languagestoskip: number[];
 }
+
+
+export interface Contest {
+  title: string;
+  description: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  status: 'upcoming' | 'ongoing' | 'finished'; 
+  _id: string;
+  imports: { lang_id: number; code: string }[];
+  metadata: metadata;
+  participants: user[]; 
+  startTime: Date; 
+  endTime: Date; 
+}
 export interface commonresponse {
   status: 'Success' | 'Failure';
   error?: string;
