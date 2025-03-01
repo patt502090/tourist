@@ -1,5 +1,3 @@
-# Makefile for a Yarn-based project with frontend and backend
-
 # Install dependencies for both frontend and backend
 install:
 	cd frontend && yarn install
@@ -7,8 +5,8 @@ install:
 
 # Start the development servers
 start:
-	cd frontend && yarn start &
-	cd backend && yarn start
+	cd frontend && yarn dev &
+	cd backend && yarn start:dev
 
 # Build both frontend and backend
 build:
@@ -27,7 +25,8 @@ lint:
 
 # Clean node_modules and reinstall dependencies
 clean:
-	rm -rf frontend/node_modules backend/node_modules && install
+	rm -rf frontend/node_modules backend/node_modules
+	make install
 
 # Remove build artifacts
 clean-build:
@@ -35,5 +34,4 @@ clean-build:
 
 # Full reset of the project
 reset: clean clean-build
-	install
-
+	make install
