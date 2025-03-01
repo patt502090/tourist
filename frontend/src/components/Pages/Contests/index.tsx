@@ -1,5 +1,4 @@
 import Footer from '../../UI/Footer';
-import ProblemsSet from '../Problems';
 import { useQuery } from '@tanstack/react-query';
 import getUser from '../../../services/getUser';
 import { useLocation } from 'react-router';
@@ -7,7 +6,7 @@ import { useEffect } from 'react';
 import { useAuthSlice } from '../../../store/authslice/auth';
 import { useUserSlice } from '../../../store/user';
 import HomeNavbar from '../Home/HomeNavbar';
-import ContestsTable from './ContestsTable';
+import ContestsSet from './ContestsSet';
 
 function ContestsList() {
   const isLogedIn = useAuthSlice((state) => state.isLogedIn);
@@ -32,7 +31,7 @@ function ContestsList() {
     <>
       <HomeNavbar />
       <main className='tw-mt-4'>
-        <ContestsTable />
+        <ContestsSet />
       </main>
       <Footer />
     </>

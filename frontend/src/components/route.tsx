@@ -3,8 +3,7 @@ import Home from './Pages/Home';
 import Problem from './Pages/Problem/Index';
 import SignIn from './Pages/SignIn/Index';
 import SignUp from './Pages/SignUp/Index';
-import ContestsList from './Pages/Contest';
-import Contest from './Pages/Contest';
+import ContestsList from './Pages/Contests';
 
 const router = createBrowserRouter([
   {
@@ -27,9 +26,9 @@ const router = createBrowserRouter([
     path: '/contests',
     element: <ContestsList/>
   },
-  {
-    path: '/contests/:contestId',
-    element: <Contest />, 
-  },
+  // {
+  //   path: '/contests/:contestId',
+  //   element: <Contest/>, 
+  // },
 ]);
 export default router;
