@@ -6,10 +6,10 @@ on:
       - main
 
 env:
-  PROJECT_ID: your-gcp-project-id
-  GKE_CLUSTER: your-cluster-name
-  GKE_ZONE: us-central1-a
-  GAR_LOCATION: us-central1-docker.pkg.dev
+  PROJECT_ID: tourist-452409
+  GKE_CLUSTER: tourist-cluster
+  GKE_ZONE: asia-southeast1-b
+  GAR_LOCATION: asia-southeast1-docker.pkg.dev
   FRONTEND_IMAGE: ${{ secrets.GAR_LOCATION }}/frontend
   BACKEND_IMAGE: ${{ secrets.GAR_LOCATION }}/backend
 

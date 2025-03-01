@@ -1,6 +1,6 @@
 provider "google" {
-  project = "tourist-xxxxxx"  # ใส่ Project ID ของคุณ
-  region  = "asia-southeast1"  # กำหนด Region ที่ต้องการใช้
+  project = "tourist-452409"  
+  region  = "asia-southeast1"  
 }
 
 # สร้าง GKE Cluster
@@ -11,14 +11,14 @@ resource "google_container_cluster" "tourist_cluster" {
 
   # การตั้งค่า Node Pools
   node_config {
-    machine_type = "e2-medium"  # ขนาด VM ของ Node
-    disk_size_gb = 20  # ขนาดดิสก์ของ Node
+    machine_type = "e2-medium" 
+    disk_size_gb = 20 
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform",
     ]
   }
 
-  # Enable Auto-scaling (ปรับจำนวน Node อัตโนมัติ)
+  # Enable Auto-scaling 
   autoscaling {
     min_node_count = 1
     max_node_count = 5

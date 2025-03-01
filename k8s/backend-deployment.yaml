@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: us-central1-docker.pkg.dev/your-gcp-project-id/backend:latest
+          image: asia-southeast1-docker.pkg.dev/tourist-452409/backend:latest
           ports:
             - containerPort: 3000
 ---

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: us-central1-docker.pkg.dev/your-gcp-project-id/frontend:latest
+          image: asia-southeast1-docker.pkg.dev/tourist-452409/frontend:latest
           ports:
             - containerPort: 80
 ---
