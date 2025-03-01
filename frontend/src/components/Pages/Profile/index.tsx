@@ -1,14 +1,14 @@
 import { Avatar, IconButton, ListItemIcon, Menu, MenuItem, Tooltip, Typography } from '@mui/material';
 import { useState } from 'react';
-import { useUserSlice } from '../../store/user';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useAuthSlice } from '../../store/authslice/auth';
 import { useMutation } from '@tanstack/react-query';
-import signOutAPI from '../../services/signOut';
 import { useNavigate } from 'react-router';
+import { useAuthSlice } from '../../../store/authslice/auth';
+import { useUserSlice } from '../../../store/user';
+import signOutAPI from '../../../services/signOut';
 
-export default function Profile() {
+export default function ProfilePage() {
   const user = useUserSlice((state) => state.user);
   const setUser = useUserSlice((state) => state.setUser);
   const signOut = useAuthSlice((state) => state.signOut);
@@ -25,6 +25,9 @@ export default function Profile() {
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  console.log('user', user);
+  console.log('submissions', user?.submissions);
   return (
     <>
       <Tooltip title='Account settings'>
@@ -77,6 +80,29 @@ export default function Profile() {
           Logout
         </MenuItem>
       </Menu>
+      <div>
+        {user ? (
+          <ul>
+            {Object.entries(user).map(([key, value]) => (
+              <li key={key}>
+                <strong>{key}:</strong> {value.toString()}
+              </li>
+            ))}
+            <h3>Submissions:</h3>
+            <ul>
+              {user?.submissions?.map((submission, index) => (
+                <li key={index}>
+                  <strong>Problem:</strong> {submission.problemId} |<strong> Status:</strong> {submission.status} |{' '}
+                  <strong>Submitted At:</strong> {submission.submittedAt.toLocaleString()}| <strong>Language:</strong>{' '}
+                  {submission.languageId}
+                </li>
+              ))}
+            </ul>
+          </ul>
+        ) : (
+          <p>No user data available</p>
+        )}
+      </div>
     </>
   );
 }

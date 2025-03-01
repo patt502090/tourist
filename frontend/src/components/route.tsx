@@ -5,6 +5,7 @@ import SignIn from './Pages/SignIn/Index';
 import SignUp from './Pages/SignUp/Index';
 import ContestsList from './Pages/Contest';
 import Contest from './Pages/Contest';
+import ProfilePage from './Pages/Profile';
 
 const router = createBrowserRouter([
   {
@@ -25,11 +26,19 @@ const router = createBrowserRouter([
   },
   {
     path: '/contests',
-    element: <ContestsList/>
+    element: <ContestsList />,
   },
   {
     path: '/contests/:contestId',
-    element: <Contest />, 
+    element: <Contest />,
+  },
+  {
+    path: '*',
+    element: <Home />,
+  },
+  {
+    path: 'profile',
+    element: <ProfilePage />,
   },
 ]);
 export default router;
