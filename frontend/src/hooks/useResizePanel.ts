@@ -1,19 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react';
 interface SizeState {
-  width: number;
-  height: number;
+  div1: number;
+  div2: number;
 }
 export default function useResizePanel({
   initialSize,
   containerRef,
   resizeHandler,
 }: {
-  initialSize: { width: number; height: number };
+  initialSize: { div1: number; div2: number };
   containerRef: React.RefObject<HTMLDivElement>;
   resizeHandler: (e: any) => SizeState | null;
 }) {
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [sizes, setSizes] = useState<SizeState>({ width: initialSize.width, height: initialSize.height });
+  const [sizes, setSizes] = useState<SizeState>(initialSize);
 
   const startDragging = useCallback((e: any) => {
     setIsDragging(true);
@@ -32,8 +32,8 @@ export default function useResizePanel({
       const caluclatedSizes = resizeHandler(e);
       if (caluclatedSizes) {
         setSizes({
-          width: caluclatedSizes.width,
-          height: caluclatedSizes.height,
+          div1: caluclatedSizes.div1,
+          div2: caluclatedSizes.div2,
         });
       }
     },

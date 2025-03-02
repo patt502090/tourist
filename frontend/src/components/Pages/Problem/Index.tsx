@@ -88,14 +88,14 @@ export default function Problem() {
   } = useShrinkState({ isLeftPanelExpanded, isRightPanelExpanded });
 
   const { startDragging, sizes } = useResizePanel({
-    initialSize: { width: 100, height: 50 },
+    initialSize: { div1: 100, div2: 50 } as any,
     containerRef,
     resizeHandler: (e) => {
       if (!containerRef.current) return null;
       const containerRect = containerRef.current.getBoundingClientRect();
       const percentage = ((e.clientX - containerRect.left) / containerRect.width) * 200;
       const constrainedPercentage = Math.floor(percentage);
-      return { width: constrainedPercentage, height: Math.floor((200 - constrainedPercentage) / 2) };
+      return { div1: constrainedPercentage, div2: Math.floor((200 - constrainedPercentage) / 2) };
     },
   });
 
@@ -272,128 +272,128 @@ export default function Problem() {
   };
 
   const onSubmitHandler = async () => {
-    if (!isLogedIn) {
-      navigate('/signin');
+  if (!isLogedIn) {
+    navigate('/signin');
+    return;
+  }
+
+  if (!editorRef.current || !problemInfo) {
+    console.error('Editor or problem info missing');
+    return;
+  }
+
+  const userCode = editorRef.current.getValue() || code[language] || problemInfo.starterCode?.find((s) => s.lang_id === language)?.code || '// No code provided';
+  console.log('User code for submission:', userCode);
+
+  if (!userCode.trim() || userCode === '// No code provided') {
+    console.error('No code provided in the editor');
+    alert('Please provide code before submitting');
+    return;
+  }
+
+  const importCode = problemInfo.imports?.find((s) => s.lang_id === language)?.code ?? '';
+  const systemCode = problemInfo.systemCode?.find((s) => s.lang_id === language)?.code ?? '';
+  const fullCode = `${importCode}\n${userCode}\n${systemCode}`;
+  console.log('Full code for submission:', fullCode);
+
+  const testcases = problemInfo.testCases;
+  if (!testcases?.length) {
+    console.error('No test cases found');
+    return;
+  }
+
+  const submissionBatch = testcases.map(({ input, output }, i) => {
+    // If output is missing, compute it for palindrome logic
+    let expectedOutput = output?.trim();
+    if (!expectedOutput) {
+      console.warn(`Testcase ${i} has no expected output in problemInfo, computing locally`);
+      const inputStr = input?.replace(/"/g, '') || ''; // Remove quotes (e.g., "madam" -> madam)
+      const isPalindrome = inputStr === inputStr.split('').reverse().join('');
+      expectedOutput = isPalindrome ? 'True' : 'False'; // Python boolean as string
+    }
+    console.log(`Testcase ${i} input: ${input}, expected_output: ${expectedOutput}`);
+
+    return {
+      language_id: language,
+      source_code: fullCode,
+      stdin: input || '',
+      expected_output: expectedOutput,
+    };
+  });
+
+  try {
+    setCurrentTab(2);
+    setProblemSubmissionLoading(true);
+
+    console.log('Sending submission batch:', JSON.stringify(submissionBatch, null, 2));
+    const batchwiseResponse = await batchwiseSubmission(submissionBatch);
+
+    if (!batchwiseResponse?.length) {
+      console.error('No response from batchwise submission');
+      setProblemSubmissionLoading(false);
       return;
     }
-  
-    if (!editorRef.current || !problemInfo) {
-      console.error('Editor or problem info missing');
+
+    const batchPromises = batchwiseResponse.map((sub) => getSubmission(sub.token));
+    const batchResults = await Promise.all(batchPromises);
+    setProblemSubmissionLoading(false);
+
+    const filteredResults = batchResults.filter((result): result is submission => !!result);
+    if (!filteredResults.length) {
+      console.error('No valid submission results');
       return;
     }
-  
-    const userCode = editorRef.current.getValue() || code[language] || problemInfo.starterCode?.find((s) => s.lang_id === language)?.code || '// No code provided';
-    console.log('User code for submission:', userCode);
-  
-    if (!userCode.trim() || userCode === '// No code provided') {
-      console.error('No code provided in the editor');
-      alert('Please provide code before submitting');
-      return;
-    }
-  
-    const importCode = problemInfo.imports?.find((s) => s.lang_id === language)?.code ?? '';
-    const systemCode = problemInfo.systemCode?.find((s) => s.lang_id === language)?.code ?? '';
-    const fullCode = `${importCode}\n${userCode}\n${systemCode}`;
-    console.log('Full code for submission:', fullCode);
-  
-    const testcases = problemInfo.testCases;
-    if (!testcases?.length) {
-      console.error('No test cases found');
-      return;
-    }
-  
-    const submissionBatch = testcases.map(({ input, output }, i) => {
-      // If output is missing, compute it for palindrome logic
-      let expectedOutput = output?.trim();
-      if (!expectedOutput) {
-        console.warn(`Testcase ${i} has no expected output in problemInfo, computing locally`);
-        const inputStr = input?.replace(/"/g, '') || ''; // Remove quotes (e.g., "madam" -> madam)
-        const isPalindrome = inputStr === inputStr.split('').reverse().join('');
-        expectedOutput = isPalindrome ? 'True' : 'False'; // Python boolean as string
-      }
-      console.log(`Testcase ${i} input: ${input}, expected_output: ${expectedOutput}`);
-  
-      return {
-        language_id: language,
-        source_code: fullCode,
-        stdin: input || '',
-        expected_output: expectedOutput,
-      };
+
+    const { status, successcount } = getResult(filteredResults);
+    setSuccessCount(successcount);
+    setProblemSubmissionStatus(status ? 'Accepted' : 'Rejected');
+
+    const submissionBody: problemsubmissionstatus = {
+      problemId: problemname?.slice(0, 24) as string,
+      languageId: language,
+      status: status ? 'Accepted' : 'Wrong Answer',
+      submissionId: batchwiseResponse[0]?.token || '',
+      submittedAt: new Date(),
+    };
+
+    const submissionResponse = await updateSubmitMutateAsync({
+      id: user?._id as string,
+      newsubmission: submissionBody,
     });
-  
-    try {
-      setCurrentTab(2);
-      setProblemSubmissionLoading(true);
-  
-      console.log('Sending submission batch:', JSON.stringify(submissionBatch, null, 2));
-      const batchwiseResponse = await batchwiseSubmission(submissionBatch);
-  
-      if (!batchwiseResponse?.length) {
-        console.error('No response from batchwise submission');
-        setProblemSubmissionLoading(false);
-        return;
-      }
-  
-      const batchPromises = batchwiseResponse.map((sub) => getSubmission(sub.token));
-      const batchResults = await Promise.all(batchPromises);
-      setProblemSubmissionLoading(false);
-  
-      const filteredResults = batchResults.filter((result): result is submission => !!result);
-      if (!filteredResults.length) {
-        console.error('No valid submission results');
-        return;
-      }
-  
-      const { status, successcount } = getResult(filteredResults);
-      setSuccessCount(successcount);
-      setProblemSubmissionStatus(status ? 'Accepted' : 'Rejected');
-  
-      const submissionBody: problemsubmissionstatus = {
-        problemId: problemname?.slice(0, 24) as string,
-        languageId: language,
-        status: status ? 'Accepted' : 'Wrong Answer',
-        submissionId: batchwiseResponse[0]?.token || '',
-        submittedAt: new Date(),
-      };
-  
-      const submissionResponse = await updateSubmitMutateAsync({
-        id: user?._id as string,
-        newsubmission: submissionBody,
-      });
-  
-      setProblemSubmissions((prev) => [...prev, submissionBody]);
-      setUser({
-        ...(user as user),
-        submissions: [
-          ...(user?.submissions ?? []),
-          {
-            ...submissionBody,
-            submissionId: submissionResponse?.data._id as string,
-            status: submissionBody.status as 'Accepted' | 'Wrong Answer' | 'Error',
-          },
-        ],
-      });
-    } catch (error: any) {
-      setProblemSubmissionLoading(false);
-      setProblemSubmissionStatus('Rejected');
-      console.error('Submission error:', error.response?.data || error.message);
-  
-      const submissionBody: problemsubmissionstatus = {
-        problemId: problemname?.slice(0, 24) as string,
-        languageId: language,
-        status: 'Wrong Answer',
-        submissionId: submissionId || 'unknown',
-        submittedAt: new Date(),
-      };
-  
-      await updateSubmitMutateAsync({
-        id: user?._id as string,
-        newsubmission: submissionBody,
-      });
-  
-      setProblemSubmissions((prev) => [...prev, submissionBody]);
-    }
-  };
+
+    setProblemSubmissions((prev) => [...prev, submissionBody]);
+    setUser({
+      ...(user as user),
+      submissions: [
+        ...(user?.submissions ?? []),
+        {
+          ...submissionBody,
+          submissionId: submissionResponse?.data._id as string,
+          status: submissionBody.status as 'Accepted' | 'Wrong Answer' | 'Error',
+        },
+      ],
+    });
+  } catch (error: any) {
+    setProblemSubmissionLoading(false);
+    setProblemSubmissionStatus('Rejected');
+    console.error('Submission error:', error.response?.data || error.message);
+
+    const submissionBody: problemsubmissionstatus = {
+      problemId: problemname?.slice(0, 24) as string,
+      languageId: language,
+      status: 'Wrong Answer',
+      submissionId: submissionId || 'unknown',
+      submittedAt: new Date(),
+    };
+
+    await updateSubmitMutateAsync({
+      id: user?._id as string,
+      newsubmission: submissionBody,
+    });
+
+    setProblemSubmissions((prev) => [...prev, submissionBody]);
+  }
+};
 
   if (isProblemLoading) {
     return (
@@ -439,7 +439,7 @@ export default function Problem() {
         }`}
         style={
           isResizeActive
-            ? { gridTemplateColumns: getGridTemplateColumns(sizes.width, sizes.height) }
+            ? { gridTemplateColumns: getGridTemplateColumns(sizes.div1, sizes.div2) }
             : undefined
         }
       >
@@ -562,7 +562,7 @@ export default function Problem() {
               shrinkState.shrinkrightpanel
             ),
             display: isRightPanelExpanded || shrinkState.shrinkleftpanel ? 'none' : 'block',
-            width: isResizeActive ? `${sizes.height}%` : '100%',
+            width: isResizeActive ? `${sizes.div2}%` : '100%',
             height: isResizeActive ? 'calc(100% - 70px)' : '100%',
             position: isResizeActive ? 'absolute' : 'static',
             right: isResizeActive ? 0 : 'initial',
