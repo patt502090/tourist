@@ -2,10 +2,13 @@ import {
   WebSocketGateway,
   SubscribeMessage,
   MessageBody,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { ContestsService } from './contests.service';
 import { CreateContestDto } from './dto/create-contest.dto';
 import { UpdateContestDto } from './dto/update-contest.dto';
+import { Server } from 'http';
+import { Socket } from 'socket.io';
 
 @WebSocketGateway(8081, { cors: { origin: '*' } })
 export class ContestsGateway {
