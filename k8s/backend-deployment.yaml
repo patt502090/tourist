@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  namespace: tourist
 spec:
   replicas: 3
   selector:
@@ -14,14 +15,39 @@ spec:
     spec:
       containers:
         - name: backend
-          image: asia-southeast1-docker.pkg.dev/tourist-452409/backend:latest
+          image: asia-southeast1-docker.pkg.dev/tourist-452409/tourist-repo/backend:latest
           ports:
             - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: FRONTEND_ORIGIN
+              value: "https://porametix.online"
+            - name: MONGODB_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: mongodb-connection-string
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: jwt-secret
+            - name: DOMAIN
+              value: "porametix.online"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: backend-service
+  namespace: tourist
 spec:
   type: ClusterIP
   selector:
@@ -30,3 +56,13 @@ spec:
     - protocol: TCP
       port: 3000
       targetPort: 3000
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-secrets
+  namespace: tourist
+type: Opaque
+data:
+  mongodb-connection-string: bW9uZ29kYitzcnY6Ly9TREEyMjk6U0RBMjI5QGNsdXN0ZXIwLmMyenJvLm1vbmdvZGIubmV0Lz9yZXRyeVdyaXRlcz10cnVlJnc9bWFqb3JpdHkmYXBwTmFtZT1DbHVzdGVyMA==
+  jwt-secret: N2QzZjJlMWI5YzhhNWQ0ZjZlM2IyYTFjOWQ4ZTdmNmI1YTRkM2MyYjFlOWY4ZDc=

@@ -76,7 +76,8 @@ export class ProblemsController {
   }
 
   @Roles(Role.Admin)
-  @UseGuards(AuthGuard, RolesGaurd, SessionGuard)
+  @UseGuards(AuthGuard, SessionGuard)
+  // @UseGuards(RolesGaurd
   @Delete(':id/:userId')
   async remove(@Param('id') id: ObjectId) {
     try {

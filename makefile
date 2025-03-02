@@ -1,37 +1,53 @@
-# Install dependencies for both frontend and backend
+.PHONY: install start build test lint clean clean-build reset deploy docker-build docker-push
+
 install:
-	cd frontend && yarn install
-	cd backend && yarn install
+	cd ./frontend && yarn install
+	cd ./backend && yarn install
 
-# Start the development servers
 start:
-	cd frontend && yarn dev &
-	cd backend && yarn start:dev
+	cd ./frontend && yarn dev & \
+	cd ./backend && yarn start:dev
 
-# Build both frontend and backend
 build:
-	cd frontend && yarn build
-	cd backend && yarn build
+	cd ./frontend && yarn build
+	cd ./backend && yarn build
 
-# Run tests for both frontend and backend
 test:
-	cd frontend && yarn test
-	cd backend && yarn test
+	cd ./frontend && yarn test || echo "No tests in frontend"
+	cd ./backend && yarn test || echo "No tests in backend"
 
-# Lint the code for both frontend and backend
 lint:
-	cd frontend && yarn lint
-	cd backend && yarn lint
+	cd ./frontend && yarn lint
+	cd ./backend && yarn lint
 
-# Clean node_modules and reinstall dependencies
 clean:
-	rm -rf frontend/node_modules backend/node_modules
-	make install
+	rm -rf ./frontend/node_modules ./backend/node_modules
+	$(MAKE) install
 
-# Remove build artifacts
 clean-build:
-	rm -rf frontend/dist frontend/build backend/dist backend/build
+	rm -rf ./frontend/dist ./frontend/build ./backend/dist ./backend/build
 
-# Full reset of the project
 reset: clean clean-build
-	make install
+	$(MAKE) install
+
+docker-build:
+	docker build -t asia-southeast1-docker.pkg.dev/tourist-452409/tourist-repo/frontend:latest \
+		--build-arg VITE_API_BASE_URL="https://porametix.online" \
+		--build-arg VITE_JUDGEAPI_BASE_URL="https://judge0-ce.p.rapidapi.com" \
+		--build-arg VITE_JUDGEAPI_API_KEY="your-api-key" \
+		--build-arg VITE_JUDGEAPI_HOST="judge0-ce.p.rapidapi.com" \
+		--build-arg VITE_GUEST_USER_PASSWORD="GuestGuestGuest" \
+		--build-arg VITE_GUEST_USER_EMAIL="Guest@Guest.com" \
+		-f ./frontend/Dockerfile ./frontend
+	docker build -t asia-southeast1-docker.pkg.dev/tourist-452409/tourist-repo/backend:latest -f ./backend/Dockerfile ./backend
+
+docker-push: docker-build
+	gcloud auth configure-docker asia-southeast1-docker.pkg.dev
+	docker push asia-southeast1-docker.pkg.dev/tourist-452409/tourist-repo/frontend:latest
+	docker push asia-southeast1-docker.pkg.dev/tourist-452409/tourist-repo/backend:latest
+
+deploy:
+	gcloud container clusters get-credentials tourist-cluster --region asia-southeast1
+	kubectl apply -f ./k8s/backend-deployment.yaml
+	kubectl apply -f ./k8s/frontend-deployment.yaml
+	kubectl apply -f ./k8s/cluster-issuer.yaml

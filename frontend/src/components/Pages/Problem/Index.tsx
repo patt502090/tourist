@@ -1,6 +1,5 @@
 import { useNavigate, useParams } from 'react-router';
-import { Monaco } from '@monaco-editor/react';
-import * as monaco from '@monaco-editor/react';
+import * as monaco from 'monaco-editor';
 import { useMutation } from '@tanstack/react-query';
 import getProblem from '../../../services/getProblem';
 import { Alert, Backdrop, CircularProgress, IconButton, Stack, Tab, Tabs, Typography } from '@mui/material';
@@ -8,7 +7,7 @@ import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import Layout from '../../UI/Layout';
 import { usethemeUtils } from '../../../context/ThemeWrapper';
 import LanguageDropDown from './LanguageDropDown';
-import { darktheme, lighttheme, supportedLanguages, theme } from '../../../constants/Index';
+import { darktheme, lighttheme, supportedLanguages } from '../../../constants/Index';
 import { useAuthSlice } from '../../../store/authslice/auth';
 import submitCode from '../../../services/sumbitCode';
 import getStatus from '../../../services/getSubmissionStatus';
@@ -39,7 +38,7 @@ import useFullScreen from '../../../hooks/useFullScreen';
 
 export default function Problem() {
   const { problemname } = useParams();
-  const editorRef = useRef(null);
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const user = useUserSlice((state) => state.user);
   const setUser = useUserSlice((state) => state.setUser);
   const { colorMode } = usethemeUtils();
@@ -67,7 +66,6 @@ export default function Problem() {
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { isFullScreenEnabled, toggleFullScreen } = useFullScreen();
-
   const [isLeftPanelExpanded, toggleLeftPanelExpansion] = useReducer((state) => {
     if (state && editorRef.current) {
       // @ts-ignore
@@ -150,10 +148,12 @@ export default function Problem() {
     }
   }, [user?.submissions.length, problemname]);
   useEffect(() => {
-    monaco.loader.init().then((monacoinstance: Monaco) => {
-      monacoinstance.editor.defineTheme('mylightTheme', lighttheme as theme);
-      monacoinstance.editor.defineTheme('mydarkTheme', darktheme as theme);
-    });
+    import('@monaco-editor/loader')
+      .then((monacoLoader) => monacoLoader.default.init())
+      .then((monacoinstance: typeof monaco) => {
+        monacoinstance.editor.defineTheme('mylightTheme', lighttheme as monaco.editor.IStandaloneThemeData);
+        monacoinstance.editor.defineTheme('mydarkTheme', darktheme as monaco.editor.IStandaloneThemeData);
+      });
   }, [colorMode]);
   const { mutateAsync } = useMutation({
     mutationKey: ['codesubmission'],
@@ -345,7 +345,9 @@ export default function Problem() {
         const batchwiseresults = await Promise.all(batchwiseresponsepromises);
         setProblemSubmissionLoading(false);
 
-        const { status, successcount } = getResult(batchwiseresults);
+        const { status, successcount } = getResult(
+          batchwiseresults.filter((result): result is submission => result !== undefined)
+        );
         setSuccessCount(successcount);
 
         setProblemSubmissionStatus(status ? 'Accepted' : 'Rejected');
@@ -377,7 +379,7 @@ export default function Problem() {
             },
           ],
         });
-      } catch (error) {
+      } catch (error: any) {
         setProblemSubmissionLoading(false);
         setProblemSubmissionStatus('Rejected');
 

@@ -1,7 +1,6 @@
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useEffect, useMemo, useState } from 'react';
-import { Problem } from '../../../utils/types';
 import {
   createColumnHelper,
   useReactTable,
@@ -10,25 +9,30 @@ import {
   getPaginationRowModel,
   ColumnFiltersState,
 } from '@tanstack/react-table';
-import ProblemsTable from './ProblemsTable';
 import { Link } from 'react-router-dom';
-import { difficultyColors } from '../../../constants/Index';
-import { isAccepted, isRejected } from '../../../utils/helpers';
-import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
-import { useUserSlice } from '../../../store/user';
-import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
-import { capitalize, SelectChangeEvent } from '@mui/material';
-import { useAuthContext } from '../../../context/AuthContext';
-import { useProblemSlice } from '../../../store/problemSlice/problem';
-import useDebounce from '../../../hooks/useDebounce';
+import { capitalize, SelectChangeEvent, IconButton, Snackbar, Alert } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { useAuthContext } from '../../context/AuthContext';
+import { useProblemSlice } from '../../store/problemSlice/problem';
+import useDebounce from '../../hooks/useDebounce';
+import { Problem } from '../../utils/types';
+import { useUserSlice } from '../../store/user';
+import { difficultyColors } from '../../constants/Index';
+import ProblemsTable from '../Pages/Problems/ProblemsTable';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import deleteProblemAPI from '../../services/deleteProblem';
 
-export default function ProblemsSet() {
+export default function ProblemsSetAdmin() {
   const [open, setOpen] = useState<boolean>(true);
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const { isError, isLoading, error } = useAuthContext();
   const problems = useProblemSlice((state) => state.problems);
+  const setProblems = useProblemSlice((state) => state.setProblems); // Add setter for problems
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const handleClose = () => {
     setOpen(false);
@@ -37,24 +41,40 @@ export default function ProblemsSet() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const user = useUserSlice((state) => state.user);
+  const queryClient = useQueryClient();
+
+  const { mutateAsync: deleteProblem } = useMutation({
+    mutationFn: ({ problemId, userId }: { problemId: string; userId: string }) => deleteProblemAPI(problemId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['get-problems'] });
+    },
+  });
+
+  const handleDelete = async (problemId: string) => {
+    try {
+      if (user) {
+        await deleteProblem({ problemId, userId: user._id });
+        setProblems(problems.filter((problem) => problem._id !== problemId));
+        setSnackbarMessage('Problem deleted successfully');
+        setSnackbarSeverity('success');
+      } else {
+        console.error('User is not authenticated');
+        setSnackbarMessage('User is not authenticated');
+        setSnackbarSeverity('error');
+      }
+    } catch (error) {
+      console.error('Failed to delete problem:', error);
+      setSnackbarMessage(`Failed to delete problem: ${(error as Error).message}`);
+      setSnackbarSeverity('error');
+    } finally {
+      setSnackbarOpen(true);
+    }
+  };
 
   const columns = useMemo(
     () => [
       columnHelper.accessor((row) => row.status, {
         id: 'Status',
-        cell: (info) => {
-          let icon;
-          if (user) {
-            icon = isAccepted(info.row.original._id, user?.submissions) ? (
-              <TaskAltOutlinedIcon titleAccess='Solved' color='success' />
-            ) : isRejected(info.row.original._id, user?.submissions) ? (
-              <PendingOutlinedIcon titleAccess='Attempted' color='warning' />
-            ) : null;
-          } else {
-            icon = null;
-          }
-          return <div> {icon}</div>;
-        },
         filterFn: 'statusFilter' as any,
       }),
       columnHelper.accessor((row) => row.title, {
@@ -75,8 +95,16 @@ export default function ProblemsSet() {
         },
         filterFn: 'difficultyFilter' as any,
       }),
+      columnHelper.display({
+        id: 'Actions',
+        cell: (info) => (
+          <IconButton onClick={() => handleDelete(info.row.original._id)} aria-label='delete'>
+            <DeleteIcon />
+          </IconButton>
+        ),
+      }),
     ],
-    [user]
+    [user, problems]
   );
 
   const table = useReactTable({
@@ -100,7 +128,7 @@ export default function ProblemsSet() {
       },
       titleFilter: (row, columnId, filterValue) => {
         const column = columnId.toLowerCase();
-        // console.log(row.original[column], filterValue);
+        // console.log(row.original[column], filterValue); // Comment out or remove this line
         const value = row.original[column].toLowerCase().includes(filterValue.toLowerCase());
         return value;
       },
@@ -123,10 +151,12 @@ export default function ProblemsSet() {
       },
     },
   });
+
   const handleDifficultyChange = (event: SelectChangeEvent) => {
     setDifficultyFilter(event.target.value);
     table.getColumn('Difficulty')?.setFilterValue(event.target.value);
   };
+
   const handleStatusChange = (event: SelectChangeEvent) => {
     setStatusFilter(event.target.value);
     table.getColumn('Status')?.setFilterValue(event.target.value);
@@ -156,6 +186,7 @@ export default function ProblemsSet() {
 
   return (
     <>
+      Admin
       <ProblemsTable
         handleStatusChange={handleStatusChange}
         difficultyFilter={difficultyFilter}
@@ -176,6 +207,16 @@ export default function ProblemsSet() {
           table.getColumn('Status')?.setFilterValue('all');
         }}
       />
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

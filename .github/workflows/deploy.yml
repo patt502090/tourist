@@ -8,10 +8,11 @@ on:
 env:
   PROJECT_ID: tourist-452409
   GKE_CLUSTER: tourist-cluster
-  GKE_ZONE: asia-southeast1-b
+  GKE_REGION: asia-southeast1
   GAR_LOCATION: asia-southeast1-docker.pkg.dev
-  FRONTEND_IMAGE: ${{ secrets.GAR_LOCATION }}/frontend
-  BACKEND_IMAGE: ${{ secrets.GAR_LOCATION }}/backend
+  REPO_NAME: tourist-repo
+  FRONTEND_IMAGE: asia-southeast1-docker.pkg.dev/tourist-452409/tourist-repo/frontend
+  BACKEND_IMAGE: asia-southeast1-docker.pkg.dev/tourist-452409/tourist-repo/backend
 
 jobs:
   build-and-test:
@@ -19,23 +20,16 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Install Dependencies
-        run: |
-          make install
-
+        run: make install
       - name: Run Tests
-        run: |
-          make test
-
+        run: make test
       - name: Build Frontend & Backend
-        run: |
-          make build
+        run: make build
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -43,23 +37,26 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Authenticate with GCP
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
-
       - name: Configure Docker
         run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}
-
       - name: Build & Push Backend
         run: |
-          docker build -t ${{ env.BACKEND_IMAGE }}:latest -f backend/Dockerfile .
+          docker build -t ${{ env.BACKEND_IMAGE }}:latest -f ./backend/Dockerfile ./backend
           docker push ${{ env.BACKEND_IMAGE }}:latest
-
       - name: Build & Push Frontend
         run: |
-          docker build -t ${{ env.FRONTEND_IMAGE }}:latest -f frontend/Dockerfile .
+          docker build \
+            --build-arg VITE_API_BASE_URL="https://porametix.online" \
+            --build-arg VITE_JUDGEAPI_BASE_URL="https://judge0-ce.p.rapidapi.com" \
+            --build-arg VITE_JUDGEAPI_API_KEY="${{ secrets.VITE_JUDGEAPI_API_KEY }}" \
+            --build-arg VITE_JUDGEAPI_HOST="judge0-ce.p.rapidapi.com" \
+            --build-arg VITE_GUEST_USER_PASSWORD="${{ secrets.VITE_GUEST_USER_PASSWORD }}" \
+            --build-arg VITE_GUEST_USER_EMAIL="${{ secrets.VITE_GUEST_USER_EMAIL }}" \
+            -t ${{ env.FRONTEND_IMAGE }}:latest -f ./frontend/Dockerfile ./frontend
           docker push ${{ env.FRONTEND_IMAGE }}:latest
 
   deploy:
@@ -68,17 +65,24 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Authenticate with GCP
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
-
+      - name: Install gke-gcloud-auth-plugin
+        run: |
+          sudo apt-get install -y apt-transport-https ca-certificates gnupg
+          echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+          sudo apt-get update
+          sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
+          sudo apt-get update
       - name: Get GKE Credentials
-        run: gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --zone ${{ env.GKE_ZONE }}
-
-      - name: Deploy Backend to GKE
-        run: kubectl apply -f k8s/backend-deployment.yaml
-
-      - name: Deploy Frontend to GKE
-        run: kubectl apply -f k8s/frontend-deployment.yaml
+        run: gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}
+      - name: Create Namespace
+        run: kubectl create namespace tourist --dry-run=client -o yaml | kubectl apply -f -
+      - name: Deploy to GKE
+        run: |
+          kubectl apply -f ./k8s/backend-deployment.yaml
+          kubectl apply -f ./k8s/frontend-deployment.yaml
+          kubectl apply -f ./k8s/cluster-issuer.yaml
