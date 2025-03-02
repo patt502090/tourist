@@ -16,9 +16,9 @@ test:
 	cd ./frontend && yarn test || echo "No tests in frontend"
 	cd ./backend && yarn test || echo "No tests in backend"
 
-# lint:
-# 	cd ./frontend && yarn lint
-# 	cd ./backend && yarn lint
+lint:
+	cd ./frontend && yarn lint
+	cd ./backend && yarn lint
 
 clean:
 	rm -rf ./frontend/node_modules ./backend/node_modules

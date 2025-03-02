@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router';
-import { Monaco } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { Monaco } from '@monaco-editor/react';
 import { useMutation } from '@tanstack/react-query';
 import getProblem from '../../../services/getProblem';
 import { Alert, Backdrop, CircularProgress, IconButton, Stack, Tab, Tabs, Typography } from '@mui/material';
