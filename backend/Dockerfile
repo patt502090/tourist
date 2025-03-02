@@ -1,14 +1,16 @@
+# Stage 1: Build
 FROM node:20 AS builder
 WORKDIR /usr/src/app
 COPY package.json yarn.lock ./
-RUN npm install
+RUN yarn install  # เปลี่ยนจาก npm install เป็น yarn install
 COPY . .
-RUN npm run build
+RUN yarn build    # เปลี่ยนจาก npm run build เป็น yarn build
 
+# Stage 2: Production
 FROM node:20 AS production
 WORKDIR /usr/src/app
 COPY package.json yarn.lock ./
-RUN npm install --only=production
+RUN yarn install --production  # เปลี่ยนจาก npm install --only=production เป็น yarn install --production
 COPY --from=builder /usr/src/app/dist ./dist
 RUN chown -R node:node /usr/src/app
 USER node
