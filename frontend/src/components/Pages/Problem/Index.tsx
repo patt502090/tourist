@@ -88,7 +88,7 @@ export default function Problem() {
   } = useShrinkState({ isLeftPanelExpanded, isRightPanelExpanded });
 
   const { startDragging, sizes } = useResizePanel({
-    initialSize: { div1: 100, div2: 50 },
+    initialSize: { div1: 100, div2: 50 } as any,
     containerRef,
     resizeHandler: (e) => {
       if (!containerRef.current) {
