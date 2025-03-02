@@ -16,6 +16,7 @@ spec:
       containers:
         - name: backend
           image: asia-southeast1-docker.pkg.dev/tourist-452409/tourist-repo/backend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:
