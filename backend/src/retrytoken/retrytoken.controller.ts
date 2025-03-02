@@ -1,4 +1,4 @@
 import { Controller } from '@nestjs/common';
 
-@Controller('retrytoken')
+@Controller('api/retrytoken')
 export class RetrytokenController {}

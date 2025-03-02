@@ -50,7 +50,7 @@ jobs:
       - name: Build & Push Frontend
         run: |
           docker build \
-            --build-arg VITE_API_BASE_URL="https://porametix.online" \
+            --build-arg VITE_API_BASE_URL="https://porametix.online/api" \
             --build-arg VITE_JUDGEAPI_BASE_URL="https://judge0-ce.p.rapidapi.com" \
             --build-arg VITE_JUDGEAPI_API_KEY="${{ secrets.VITE_JUDGEAPI_API_KEY }}" \
             --build-arg VITE_JUDGEAPI_HOST="judge0-ce.p.rapidapi.com" \
