@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from 'react-router';
+import { Monaco } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import { useMutation } from '@tanstack/react-query';
 import getProblem from '../../../services/getProblem';
