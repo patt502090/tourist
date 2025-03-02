@@ -16,7 +16,6 @@ spec:
       containers:
         - name: frontend
           image: asia-southeast1-docker.pkg.dev/tourist-452409/tourist-repo/frontend:latest
-          imagePullPolicy: Always
           ports:
             - containerPort: 80
           resources:
