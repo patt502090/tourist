@@ -11,8 +11,8 @@ env:
   GKE_REGION: asia-southeast1
   GAR_LOCATION: asia-southeast1-docker.pkg.dev
   REPO_NAME: tourist-repo
-  FRONTEND_IMAGE: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/frontend
-  BACKEND_IMAGE: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/backend
+  FRONTEND_IMAGE: asia-southeast1-docker.pkg.dev/tourist-452409/tourist-repo/frontend
+  BACKEND_IMAGE: asia-southeast1-docker.pkg.dev/tourist-452409/tourist-repo/backend
 
 jobs:
   build-and-test:
