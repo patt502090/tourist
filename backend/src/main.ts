@@ -10,7 +10,6 @@ dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
   // ตั้งค่า Socket.IO adapter
   app.useWebSocketAdapter(new IoAdapter(app));
 
@@ -26,11 +25,11 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle('Leetcode backend')
+    .setTitle('API Documentation')
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('apidoc', app, document);
 
   const port = apiconfig().port || 3000; // default port ถ้า apiconfig().port ไม่มีค่า
   await app.listen(port);

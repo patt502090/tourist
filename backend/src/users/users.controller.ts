@@ -24,7 +24,7 @@ import { submission } from 'src/interfaces/config.interface';
 import { Response } from 'express';
 import { SessionGuard } from 'src/sessiontoken/session.guard';
 
-@Controller('users')
+@Controller('api/users')
 export class UsersController {
   constructor(private readonly userSrvice: UsersService) {}
   @Get('/')
