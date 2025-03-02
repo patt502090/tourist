@@ -88,14 +88,14 @@ export default function Problem() {
   } = useShrinkState({ isLeftPanelExpanded, isRightPanelExpanded });
 
   const { startDragging, sizes } = useResizePanel({
-    initialSize: { div1: 100, div2: 50 },
+    initialSize: { width: 100, height: 50 },
     containerRef,
     resizeHandler: (e) => {
       if (!containerRef.current) return null;
       const containerRect = containerRef.current.getBoundingClientRect();
       const percentage = ((e.clientX - containerRect.left) / containerRect.width) * 200;
       const constrainedPercentage = Math.floor(percentage);
-      return { div1: constrainedPercentage, div2: Math.floor((200 - constrainedPercentage) / 2) };
+      return { width: constrainedPercentage, height: Math.floor((200 - constrainedPercentage) / 2) };
     },
   });
 
@@ -439,7 +439,7 @@ export default function Problem() {
         }`}
         style={
           isResizeActive
-            ? { gridTemplateColumns: getGridTemplateColumns(sizes.div1, sizes.div2) }
+            ? { gridTemplateColumns: getGridTemplateColumns(sizes.width, sizes.height) }
             : undefined
         }
       >
@@ -562,7 +562,7 @@ export default function Problem() {
               shrinkState.shrinkrightpanel
             ),
             display: isRightPanelExpanded || shrinkState.shrinkleftpanel ? 'none' : 'block',
-            width: isResizeActive ? `${sizes.div2}%` : '100%',
+            width: isResizeActive ? `${sizes.height}%` : '100%',
             height: isResizeActive ? 'calc(100% - 70px)' : '100%',
             position: isResizeActive ? 'absolute' : 'static',
             right: isResizeActive ? 0 : 'initial',
