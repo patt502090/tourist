@@ -64,7 +64,7 @@ spec:
                 name: frontend-service
                 port:
                   number: 80
-          - path: /problems
+          - path: /
             pathType: Prefix
             backend:
               service:
