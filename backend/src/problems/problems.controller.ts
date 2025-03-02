@@ -20,7 +20,7 @@ import { ObjectId } from 'mongoose';
 import { getFailureResponse } from 'src/utils';
 import { SessionGuard } from 'src/sessiontoken/session.guard';
 
-@Controller('problems')
+@Controller('api/problems')
 export class ProblemsController {
   constructor(private readonly problemsService: ProblemsService) {}
 

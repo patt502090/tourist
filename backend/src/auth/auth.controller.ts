@@ -12,7 +12,7 @@ import { signInDto } from './dto/signin-user.dto';
 import { getSuccessResponse } from 'src/utils';
 import { Response, Request } from 'express';
 
-@Controller('auth')
+@Controller('api/auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 

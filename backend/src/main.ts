@@ -29,7 +29,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('apidoc', app, document);
+  SwaggerModule.setup('api/doc', app, document);
 
   const port = apiconfig().port || 3000; // default port ถ้า apiconfig().port ไม่มีค่า
   await app.listen(port);
