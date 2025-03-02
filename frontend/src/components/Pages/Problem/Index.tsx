@@ -88,16 +88,19 @@ export default function Problem() {
   } = useShrinkState({ isLeftPanelExpanded, isRightPanelExpanded });
 
   const { startDragging, sizes } = useResizePanel({
-    initialSize: { div1: 100, div2: 50 } as any,
+    initialSize: { div1: 100, div2: 50 },
     containerRef,
     resizeHandler: (e) => {
-      if (!containerRef.current) return null;
+      if (!containerRef.current) {
+        return null;
+      }
       const containerRect = containerRef.current.getBoundingClientRect();
       const percentage = ((e.clientX - containerRect.left) / containerRect.width) * 200;
       const constrainedPercentage = Math.floor(percentage);
       return { div1: constrainedPercentage, div2: Math.floor((200 - constrainedPercentage) / 2) };
     },
   });
+
 
   const { saveUserCode, getUserCode } = useCodeStorage();
 
