@@ -16,7 +16,6 @@ export default function HomeNavbar() {
     <nav className='tw-container-lg tw-mx-auto tw-flex tw-justify-around tw-p-2 tw-bottom-2 tw-border-b-[#ffffff24]'>
       <div className='tw-flex tw-items-center tw-gap-2'>
         <img src={colorMode === 'light' ? darklogo : lightlogo} width={100} height={80} className='tw-object-contain'>
-          Tourist
         </img>
       </div>
       <ul className='tw-list-none tw-flex tw-justify-between tw-items-center'>
@@ -29,7 +28,7 @@ export default function HomeNavbar() {
                 component={ReactLink}
                 to='/signin'
               >
-                Sign in
+                Sign in Tourist
               </Link>
               <span>or</span>
               <Link
