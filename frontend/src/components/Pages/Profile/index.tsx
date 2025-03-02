@@ -1,10 +1,7 @@
 import {
-  Avatar,
-  IconButton,
   ListItemIcon,
   Menu,
   MenuItem,
-  Tooltip,
   Typography,
   Table,
   TableBody,
@@ -39,9 +36,9 @@ export default function ProfilePage() {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [tabIndex, setTabIndex] = useState(0);
   const open = Boolean(anchorEl);
-  const handleClick: React.MouseEventHandler<HTMLButtonElement> = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+  // const handleClick: React.MouseEventHandler<HTMLButtonElement> = (event) => {
+  //   setAnchorEl(event.currentTarget);
+  // };
   const handleClose = () => {
     setAnchorEl(null);
   };

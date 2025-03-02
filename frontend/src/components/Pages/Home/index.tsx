@@ -32,6 +32,7 @@ function Home() {
     <>
       <HomeNavbar />
       <main className='tw-mt-4'>{user?.roles.includes('admin') ? <ProblemsSetAdmin /> : <ProblemsSet />}</main>
+      <Footer />
     </>
   );
 }

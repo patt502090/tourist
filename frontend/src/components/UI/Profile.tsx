@@ -13,7 +13,7 @@ export default function Profile() {
   const setUser = useUserSlice((state) => state.setUser);
   const signOut = useAuthSlice((state) => state.signOut);
   const navigate = useNavigate();
-  const { mutateAsync, isError, error } = useMutation({
+  const { mutateAsync, isError } = useMutation({
     mutationKey: ['sign-out'],
     mutationFn: signOutAPI,
   });

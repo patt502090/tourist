@@ -100,7 +100,7 @@ export default function ProblemsSet() {
       },
       titleFilter: (row, columnId, filterValue) => {
         const column = columnId.toLowerCase();
-        console.log(row.original[column], filterValue);
+        // console.log(row.original[column], filterValue);
         const value = row.original[column].toLowerCase().includes(filterValue.toLowerCase());
         return value;
       },

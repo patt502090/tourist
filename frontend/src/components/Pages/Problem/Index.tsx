@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from 'react-router';
-import { Monaco } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import { useMutation } from '@tanstack/react-query';
 import getProblem from '../../../services/getProblem';
@@ -8,7 +7,7 @@ import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import Layout from '../../UI/Layout';
 import { usethemeUtils } from '../../../context/ThemeWrapper';
 import LanguageDropDown from './LanguageDropDown';
-import { darktheme, lighttheme, supportedLanguages, theme } from '../../../constants/Index';
+import { darktheme, lighttheme, supportedLanguages } from '../../../constants/Index';
 import { useAuthSlice } from '../../../store/authslice/auth';
 import submitCode from '../../../services/sumbitCode';
 import getStatus from '../../../services/getSubmissionStatus';
