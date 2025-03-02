@@ -295,125 +295,130 @@ export default function Problem() {
   const onSubmitHandler = async () => {
     if (!isLogedIn) {
       navigate('/signin');
+      return;
     }
-
-    if (editorRef.current && problemInfo) {
-      const submissionbatch = [];
-      const testcases = problemInfo?.testCases;
-
-      // ตรวจสอบว่า imports และ systemCode มีค่าหรือไม่ก่อนเรียก .find()
-      const importCode = problemInfo.imports?.find((s) => s.lang_id == language)?.code ?? '';
-      const systemCode = problemInfo.systemCode?.find((s) => s.lang_id == language)?.code ?? '';
-
-      // ถ้าไม่พบข้อมูลให้แจ้งเตือน
-      if (!importCode || !systemCode) {
-        console.log('Code snippets not found for the selected language');
+  
+    if (!editorRef.current || !problemInfo) {
+      console.error('Editor or problem info is missing');
+      return;
+    }
+  
+    const submissionbatch = [];
+    const testcases = problemInfo?.testCases;
+  
+    const importCode = problemInfo.imports?.find((s) => s.lang_id == language)?.code ?? '';
+    const systemCode = problemInfo.systemCode?.find((s) => s.lang_id == language)?.code ?? '';
+    const userCode = editorRef.current.getValue(); // ดึงโค้ดจาก editor
+  
+    // ตรวจสอบว่า userCode มีค่าหรือไม่
+    if (!userCode || userCode.trim() === '') {
+      console.error('No code provided in the editor');
+      return;
+    }
+  
+    const code = `${importCode}\n${userCode}\n${systemCode}`;
+  
+    if (!testcases || testcases.length === 0) {
+      console.error('No test cases found');
+      return;
+    }
+  
+    // สร้าง submission batch และตรวจสอบ testcases
+    for (let index = 0; index < testcases.length; index++) {
+      const { input, output } = testcases[index];
+      if (!input || !output) {
+        console.warn(`Test case ${index} is incomplete: input=${input}, output=${output}`);
       }
-
-      const code = `${importCode} \n ${editorRef.current.getValue()} \n ${systemCode}`;
-
-      if (!testcases || testcases.length === 0) {
-        console.log('No test cases found');
+      submissionbatch.push({
+        language_id: language,
+        source_code: code,
+        stdin: input || '', // ใส่ค่า default ถ้า input ว่าง
+        expected_output: output || '', // ใส่ค่า default ถ้า output ว่าง
+      });
+    }
+  
+    try {
+      setCurrentTab(2);
+      setProblemSubmissionLoading(true);
+  
+      // Debug: ดูข้อมูลที่ส่งไป
+      console.log('Sending submission batch:', JSON.stringify(submissionbatch, null, 2));
+  
+      const batchwiseresponse = await batchwiseSubmission(submissionbatch);
+  
+      if (!batchwiseresponse || batchwiseresponse.length === 0) {
+        console.error('No response from batchwise submission');
+        setProblemSubmissionLoading(false);
         return;
       }
-
-      for (let index = 0; index < testcases.length; index++) {
-        const { input, output } = testcases[index];
-        submissionbatch.push({
-          language_id: language,
-          source_code: code,
-          stdin: input,
-          expected_output: output,
-        });
+  
+      const batchwiseresponsepromises = batchwiseresponse.map((submission) =>
+        getSubmission(submission.token)
+      );
+      const batchwiseresults = await Promise.all(batchwiseresponsepromises);
+      setProblemSubmissionLoading(false);
+  
+      const filteredResults = batchwiseresults.filter((result): result is submission => result !== undefined);
+      if (filteredResults.length === 0) {
+        console.error('No valid submission results');
+        return;
       }
-
-      try {
-        setCurrentTab(2);
-        setProblemSubmissionLoading(true);
-
-        // ส่งข้อมูล batchwise
-        console.log('Sending submission batch:', submissionbatch);
-        const batchwiseresponse = await batchwiseSubmission(submissionbatch);
-
-        // ตรวจสอบการตอบกลับจาก API
-        if (!batchwiseresponse) {
-          console.log('No response from batchwise submission');
-          setProblemSubmissionLoading(false);
-          return;
-        }
-
-        const batchwiseresponsepromises = batchwiseresponse.map((submission) => getSubmission(submission.token));
-
-        const batchwiseresults = await Promise.all(batchwiseresponsepromises);
-        setProblemSubmissionLoading(false);
-
-        const { status, successcount } = getResult(
-          batchwiseresults.filter((result): result is submission => result !== undefined)
-        );
-        setSuccessCount(successcount);
-
-        setProblemSubmissionStatus(status ? 'Accepted' : 'Rejected');
-
-        const updatesubmissionbody = {
-          problemId: problemname?.slice(0, 24) as string,
-          languageId: language,
-          status: status ? 'Accepted' : 'Wrong Answer',
-          submissionId: submissionId,
-          submittedAt: new Date(),
-        };
-
-        const submissionupdateResponse = await updateSubmitMutateAsync({
-          id: user?._id as string,
-          newsubmission: updatesubmissionbody,
-        });
-
-        setProblemSubmissions((prev) => [...prev, updatesubmissionbody]);
-        setUser({
-          ...(user as user),
-          submissions: [
-            ...(user?.submissions ?? []),
-            {
-              problemId: problemname?.slice(0, 24) as string,
-              submissionId: submissionupdateResponse?.data._id as string,
-              languageId: language,
-              status: status ? 'Accepted' : 'Wrong Answer',
-              submittedAt: new Date(),
-            },
-          ],
-        });
-      } catch (error: any) {
-        setProblemSubmissionLoading(false);
-        setProblemSubmissionStatus('Rejected');
-
-        if (error?.response) {
-          console.error('API error response:', error.response.data); // ตรวจสอบข้อผิดพลาดที่ได้รับจาก API
-        } else {
-          console.error('Unexpected error:', error);
-        }
-
-        await updateSubmitMutateAsync({
-          id: user?._id as string,
-          newsubmission: {
-            problemId: problemname?.slice(0, 24) as string,
-            languageId: language,
-            status: 'Wrong Answer',
-            submissionId: submissionId,
-            submittedAt: new Date(),
-          },
-        });
-
-        setProblemSubmissions((prev) => [
-          ...prev,
+  
+      const { status, successcount } = getResult(filteredResults);
+      setSuccessCount(successcount);
+      setProblemSubmissionStatus(status ? 'Accepted' : 'Rejected');
+  
+      const updatesubmissionbody = {
+        problemId: problemname?.slice(0, 24) as string,
+        languageId: language,
+        status: status ? 'Accepted' : 'Wrong Answer',
+        submissionId: batchwiseresponse[0]?.token || '', // ใช้ token แรกเป็นตัวแทน
+        submittedAt: new Date(),
+      };
+  
+      const submissionupdateResponse = await updateSubmitMutateAsync({
+        id: user?._id as string,
+        newsubmission: updatesubmissionbody,
+      });
+  
+      setProblemSubmissions((prev) => [...prev, updatesubmissionbody]);
+      setUser({
+        ...(user as user),
+        submissions: [
+          ...(user?.submissions ?? []),
           {
             problemId: problemname?.slice(0, 24) as string,
+            submissionId: submissionupdateResponse?.data._id as string,
             languageId: language,
-            status: 'Wrong Answer',
-            submissionId: submissionId,
+            status: status ? 'Accepted' : 'Wrong Answer',
             submittedAt: new Date(),
           },
-        ]);
-        console.log(error);
+        ],
+      });
+    } catch (error: any) {
+      setProblemSubmissionLoading(false);
+      setProblemSubmissionStatus('Rejected');
+  
+      if (error?.response) {
+        console.error('API error response:', error.response.data);
+      } else {
+        console.error('Unexpected error:', error.message || error);
       }
+  
+      const updatesubmissionbody = {
+        problemId: problemname?.slice(0, 24) as string,
+        languageId: language,
+        status: 'Wrong Answer',
+        submissionId: submissionId || 'unknown',
+        submittedAt: new Date(),
+      };
+  
+      await updateSubmitMutateAsync({
+        id: user?._id as string,
+        newsubmission: updatesubmissionbody,
+      });
+  
+      setProblemSubmissions((prev) => [...prev, updatesubmissionbody]);
     }
   };
 
