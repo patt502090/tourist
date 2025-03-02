@@ -67,9 +67,9 @@ export default function Problem() {
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { isFullScreenEnabled, toggleFullScreen } = useFullScreen();
-
   const [isLeftPanelExpanded, toggleLeftPanelExpansion] = useReducer((state) => {
     if (state && editorRef.current) {
+      // @ts-ignore
       editorRef.current.layout({});
     }
     return !state;
@@ -92,7 +92,9 @@ export default function Problem() {
     initialSize: { div1: 100, div2: 50 },
     containerRef,
     resizeHandler: (e) => {
-      if (!containerRef.current) return null;
+      if (!containerRef.current) {
+        return null;
+      }
       const containerRect = containerRef.current.getBoundingClientRect();
       const percentage = ((e.clientX - containerRect.left) / containerRect.width) * 200;
       const constrainedPercentage = Math.floor(percentage);
@@ -102,7 +104,6 @@ export default function Problem() {
 
   const { saveUserCode, getUserCode } = useCodeStorage();
 
-  // ตั้งค่าเริ่มต้นและอัปเดตเมื่อ problemname หรือ language เปลี่ยน
   useEffect(() => {
     setCurrentTab(0);
     setProblemSubmissionStatus('');
@@ -110,41 +111,43 @@ export default function Problem() {
   }, [problemname]);
 
   useEffect(() => {
-    const fetchProblem = async () => {
-      try {
+    try {
+      (async () => {
         setIsProblemLoading(true);
         const problemResponse = await getProblem(problemname?.slice(0, 24) as string);
         setIsProblemLoading(false);
         if (problemResponse?.status === 'Success') {
           setProblemInfo(problemResponse.data);
           const storedCode = await getUserCode(problemname?.slice(0, 24) as string);
-          const starterCode = problemResponse.data?.starterCode?.find((s) => s.lang_id === language)?.code ?? '';
           if (Object.keys(storedCode).length) {
-            setCode({
-              ...storedCode,
-              [language]: storedCode[language] || starterCode,
-            });
+            if (!storedCode[language]) {
+              setCode({
+                ...storedCode,
+                [language]: problemResponse.data?.starterCode.find((s) => s.lang_id == language)?.code ?? '',
+              });
+            } else {
+              setCode(storedCode);
+            }
           } else {
-            setCode({ [language]: starterCode });
+            setCode({ [language]: problemResponse.data?.starterCode.find((s) => s.lang_id == language)?.code ?? '' });
           }
         } else {
-          throw new Error(problemResponse?.error || 'Failed to fetch problem');
+          throw new Error(problemResponse?.error);
         }
-      } catch (error) {
-        setIsProblemLoading(false);
-        setIsErrorWithProblemInfo(true);
-        if (error instanceof Error) setErrorInfoProblemFetch(error);
+      })();
+    } catch (error) {
+      setIsProblemLoading(false);
+      setIsErrorWithProblemInfo(true);
+      if (error instanceof Error) {
+        setErrorInfoProblemFetch(error);
       }
-    };
-    fetchProblem();
-  }, [problemname, language]);
-
-  useEffect(() => {
-    if (user?.submissions?.length) {
-      setProblemSubmissions(user.submissions.filter((sub) => sub.problemId === problemname?.slice(0, 24)));
     }
-  }, [user?.submissions, problemname]);
-
+  }, [problemname]);
+  useEffect(() => {
+    if (user?.submissions.length) {
+      setProblemSubmissions(user?.submissions.filter((sub) => sub.problemId === problemname?.slice(0, 24)));
+    }
+  }, [user?.submissions.length, problemname]);
   useEffect(() => {
     import('@monaco-editor/loader')
       .then((monacoLoader) => monacoLoader.default.init())
@@ -153,12 +156,10 @@ export default function Problem() {
         monacoinstance.editor.defineTheme('mydarkTheme', darktheme as monaco.editor.IStandaloneThemeData);
       });
   }, [colorMode]);
-
   const { mutateAsync } = useMutation({
     mutationKey: ['codesubmission'],
     mutationFn: submitCode,
   });
-
   const { mutateAsync: updateSubmitMutateAsync } = useMutation({
     mutationKey: ['updatesubmission'],
     mutationFn: addSubmission,
@@ -166,235 +167,254 @@ export default function Problem() {
 
   const firstPanelTabLabels = useMemo(() => ['Description', 'Submissions'], []);
   const secondPanelTabLabels = useMemo(() => ['Code', 'Test Results', 'Output'], []);
-
-  const handleClose = () => setOpen(false);
-
+  const handleClose = () => {
+    setOpen(false);
+  };
   const handleChange = (id: number) => {
     setLanguage(id);
-    setCode((prev) => ({
-      ...prev,
-      [id]: prev[id] || problemInfo?.starterCode?.find((s) => s.lang_id === id)?.code || '',
-    }));
+    setCode((prev) => {
+      const copy = { ...prev };
+      if (!copy[id]) {
+        copy[id] = problemInfo?.starterCode.find((s) => s.lang_id == id)?.code ?? '';
+      }
+      return copy;
+    });
   };
-
   const handleTabChange = (
     _: React.SyntheticEvent,
     newValue: number,
     type: 'firstpaneltabs' | 'secondpaneltabs' | 'codesubmissiontab'
   ) => {
-    if (type === 'firstpaneltabs') setLeftTab(newValue);
-    else if (type === 'secondpaneltabs') setCurrentTab(newValue);
-    else setSubmissionTab(newValue);
-  };
-
-  const getSubmission = async (id: string) => {
-    const getData = async <T extends submission>(response: T): Promise<submission> => {
-      if (!['Processing', 'In Queue'].includes(response?.status?.description)) {
-        setSubmissionStatusInProcess(false);
-        return response;
-      }
-      const submissionResponse = await getStatus(id);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setSubmissionStatusInProcess(true);
-      return getData(submissionResponse as submission);
-    };
-
-    try {
-      setSubmissionStatusLoading(true);
-      const data = await getData({ status: { description: 'Processing' } } as submission);
-      setSubmissionStatusLoading(false);
-      setproblemRunStatus([data]);
-      return data;
-    } catch (error) {
-      setSubmissionStatusLoading(false);
-      setSubmissionStatusError(true);
-      console.error('Error fetching submission status:', error);
-      throw error;
+    if (type === 'firstpaneltabs') {
+      setLeftTab(newValue);
+    } else if (type === 'secondpaneltabs') {
+      setCurrentTab(newValue);
+    } else {
+      setSubmissionTab(newValue);
     }
   };
-
-  const onClickHandler = async () => {
-    if (!isLogedIn) {
-      navigate('/signin');
-      return;
-    }
-
-    if (!editorRef.current || !problemInfo) {
-      console.error('Editor or problem info missing');
-      return;
-    }
-
-    try {
-      const importCode = problemInfo.imports?.find((s) => s.lang_id === language)?.code ?? '';
-      const systemCode = problemInfo.systemCode?.find((s) => s.lang_id === language)?.code ?? '';
-      const userCode = editorRef.current.getValue() || code[language] || '';
-      
-      if (!userCode.trim()) {
-        console.error('No code to execute');
-        alert('Please provide code to execute');
-        return;
-      }
-
-      const fullCode = `${importCode}\n${userCode}\n${systemCode}`;
-
-      setIsSumbitted(true);
-      setCurrentTab(1);
-
-      const testcases = problemInfo.testCases;
-      if (testcases?.length) {
-        const [firstTestcase] = testcases;
-        const response = await mutateAsync({
-          code: fullCode,
-          expected_output: firstTestcase.output,
-          input: firstTestcase.input,
-          language_id: language,
-        });
-        setSubmissionId(response?.data.token);
-        await getSubmission(response?.data.token);
-      } else {
-        console.error('No test cases available');
-      }
-    } catch (error) {
-      setIsSumbitted(false);
-      console.error('Execution error:', error);
-    }
-  };
-
-  const onSubmitHandler = async () => {
-    if (!isLogedIn) {
-      navigate('/signin');
-      return;
-    }
-
-    if (!editorRef.current || !problemInfo) {
-      console.error('Editor or problem info missing');
-      return;
-    }
-
-    const submissionbatch = [];
-    const testcases = problemInfo.testCases;
-    const importCode = problemInfo.imports?.find((s) => s.lang_id === language)?.code ?? '';
-    const systemCode = problemInfo.systemCode?.find((s) => s.lang_id === language)?.code ?? '';
-    const userCode = editorRef.current.getValue() || code[language] || '';
-
-    if (!userCode.trim()) {
-      console.error('No code provided in the editor');
-      alert('Please provide code before submitting');
-      return;
-    }
-
-    const fullCode = `${importCode}\n${userCode}\n${systemCode}`;
-
-    if (!testcases?.length) {
-      console.error('No test cases found');
-      return;
-    }
-
-    for (let i = 0; i < testcases.length; i++) {
-      const { input, output } = testcases[i];
-      submissionbatch.push({
-        language_id: language,
-        source_code: fullCode,
-        stdin: input || '',
-        expected_output: output || '',
-      });
-    }
-
-    try {
-      setCurrentTab(2);
-      setProblemSubmissionLoading(true);
-
-      console.log('Sending submission batch:', JSON.stringify(submissionbatch, null, 2));
-      const batchwiseResponse = await batchwiseSubmission(submissionbatch);
-
-      if (!batchwiseResponse?.length) {
-        console.error('No response from batchwise submission');
-        setProblemSubmissionLoading(false);
-        return;
-      }
-
-      const batchPromises = batchwiseResponse.map((sub) => getSubmission(sub.token));
-      const batchResults = await Promise.all(batchPromises);
-      setProblemSubmissionLoading(false);
-
-      const filteredResults = batchResults.filter((result): result is submission => !!result);
-      if (!filteredResults.length) {
-        console.error('No valid submission results');
-        return;
-      }
-
-      const { status, successcount } = getResult(filteredResults);
-      setSuccessCount(successcount);
-      setProblemSubmissionStatus(status ? 'Accepted' : 'Rejected');
-
-      const submissionBody = {
-        problemId: problemname?.slice(0, 24) as string,
-        languageId: language,
-        status: status ? 'Accepted' : 'Wrong Answer',
-        submissionId: batchwiseResponse[0]?.token || '',
-        submittedAt: new Date(),
-      };
-
-      const submissionResponse = await updateSubmitMutateAsync({
-        id: user?._id as string,
-        newsubmission: submissionBody,
-      });
-
-      setProblemSubmissions((prev) => [...prev, submissionBody]);
-      setUser({
-        ...(user as user),
-        submissions: [
-          ...(user?.submissions ?? []),
-          {
-            ...submissionBody,
-            submissionId: submissionResponse?.data._id as string,
-            status: submissionBody.status as 'Accepted' | 'Wrong Answer' | 'Error',
-          },
-        ],
-      });
-    } catch (error: any) {
-      setProblemSubmissionLoading(false);
-      setProblemSubmissionStatus('Rejected');
-      console.error('Submission error:', error.response?.data || error.message);
-      
-      const submissionBody = {
-        problemId: problemname?.slice(0, 24) as string,
-        languageId: language,
-        status: 'Wrong Answer',
-        submissionId: submissionId || 'unknown',
-        submittedAt: new Date(),
-      };
-      
-      await updateSubmitMutateAsync({
-        id: user?._id as string,
-        newsubmission: submissionBody,
-      });
-      
-      setProblemSubmissions((prev) => [...prev, submissionBody]);
-    }
-  };
-
   if (isProblemLoading) {
     return (
-      <Backdrop
-        sx={{ color: '#ffffff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={open}
-        onClick={handleClose}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
+      <>
+        <Backdrop
+          sx={{ color: '#ffffff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={open}
+          onClick={handleClose}
+        >
+          <CircularProgress color='inherit' />
+        </Backdrop>
+      </>
     );
   }
 
   if (isErrorWithProblemInfo) {
     return (
       <Layout>
-        <Alert className="tw-mx-auto" severity="error">
+        <Alert className='tw-mx-auto' severity='error'>
           {errorInfoProblemFetch?.message}
         </Alert>
       </Layout>
     );
   }
+
+  const getSubmission = async (id: string) => {
+    async function getData<T extends submission>(response: T) {
+      if (!['Processing', 'In Queue'].includes(response?.status?.description)) {
+        setSubmissionStatusInProcess(false);
+        return response;
+      }
+      try {
+        const submissionresponse = await getStatus(id);
+        await new Promise((resolve) => {
+          setTimeout(() => {
+            resolve('resolved');
+          }, 2000);
+        });
+        setSubmissionStatusInProcess(true);
+        return getData(submissionresponse as submission);
+      } catch (error) {
+        if (error instanceof Error) {
+          console.log(error.message);
+          throw error;
+        }
+      }
+    }
+    try {
+      setSubmissionStatusLoading(true);
+      // @ts-ignore
+      const data = await getData({ status: { description: 'Processing' } });
+      setSubmissionStatusLoading(false);
+      setproblemRunStatus([data as submission]);
+      return data;
+    } catch (error) {
+      setSubmissionStatusLoading(false);
+      setSubmissionStatusError(true);
+      console.error(error);
+    }
+  };
+
+  const onClickHandler = async () => {
+    if (!isLogedIn) {
+      navigate('/signin');
+      return; // ให้หยุดการทำงานหากไม่ได้ล็อกอิน
+    }
+
+    if (editorRef.current && problemInfo) {
+      try {
+        // ตรวจสอบ problemInfo และ arrays ก่อนใช้ .find()
+        const importCode = problemInfo.imports?.find((s) => s.lang_id == language)?.code ?? '';
+        const systemCode = problemInfo.systemCode?.find((s) => s.lang_id == language)?.code ?? '';
+
+        const code = `${importCode} \n${editorRef.current.getValue()} \n${systemCode}`;
+
+        setIsSumbitted(true);
+        setCurrentTab(1);
+
+        const testcases = problemInfo?.testCases;
+        if (testcases && testcases.length > 0) {
+          const [firsttestcase] = testcases;
+          const response = await mutateAsync({
+            code,
+            expected_output: firsttestcase.output,
+            input: firsttestcase.input,
+            language_id: language,
+          });
+          setSubmissionId(response?.data.token);
+          await getSubmission(response?.data.token);
+        } else {
+          console.log('No test cases available');
+        }
+      } catch (error) {
+        setIsSumbitted(false);
+        console.log(error);
+      }
+    }
+  };
+
+  const onSubmitHandler = async () => {
+    if (!isLogedIn) {
+      navigate('/signin');
+    }
+
+    if (editorRef.current && problemInfo) {
+      const submissionbatch = [];
+      const testcases = problemInfo?.testCases;
+
+      // ตรวจสอบว่า imports และ systemCode มีค่าหรือไม่ก่อนเรียก .find()
+      const importCode = problemInfo.imports?.find((s) => s.lang_id == language)?.code ?? '';
+      const systemCode = problemInfo.systemCode?.find((s) => s.lang_id == language)?.code ?? '';
+
+      // ถ้าไม่พบข้อมูลให้แจ้งเตือน
+      if (!importCode || !systemCode) {
+        console.log('Code snippets not found for the selected language');
+      }
+
+      const code = `${importCode} \n ${editorRef.current.getValue()} \n ${systemCode}`;
+
+      if (!testcases || testcases.length === 0) {
+        console.log('No test cases found');
+        return;
+      }
+
+      for (let index = 0; index < testcases.length; index++) {
+        const { input, output } = testcases[index];
+        submissionbatch.push({
+          language_id: language,
+          source_code: code,
+          stdin: input,
+          expected_output: output,
+        });
+      }
+
+      try {
+        setCurrentTab(2);
+        setProblemSubmissionLoading(true);
+
+        // ส่งข้อมูล batchwise
+        console.log('Sending submission batch:', submissionbatch);
+        const batchwiseresponse = await batchwiseSubmission(submissionbatch);
+
+        // ตรวจสอบการตอบกลับจาก API
+        if (!batchwiseresponse) {
+          console.log('No response from batchwise submission');
+          setProblemSubmissionLoading(false);
+          return;
+        }
+
+        const batchwiseresponsepromises = batchwiseresponse.map((submission) => getSubmission(submission.token));
+
+        const batchwiseresults = await Promise.all(batchwiseresponsepromises);
+        setProblemSubmissionLoading(false);
+
+        const { status, successcount } = getResult(
+          batchwiseresults.filter((result): result is submission => result !== undefined)
+        );
+        setSuccessCount(successcount);
+
+        setProblemSubmissionStatus(status ? 'Accepted' : 'Rejected');
+
+        const updatesubmissionbody = {
+          problemId: problemname?.slice(0, 24) as string,
+          languageId: language,
+          status: status ? 'Accepted' : 'Wrong Answer',
+          submissionId: submissionId,
+          submittedAt: new Date(),
+        };
+
+        const submissionupdateResponse = await updateSubmitMutateAsync({
+          id: user?._id as string,
+          newsubmission: updatesubmissionbody,
+        });
+
+        setProblemSubmissions((prev) => [...prev, updatesubmissionbody]);
+        setUser({
+          ...(user as user),
+          submissions: [
+            ...(user?.submissions ?? []),
+            {
+              problemId: problemname?.slice(0, 24) as string,
+              submissionId: submissionupdateResponse?.data._id as string,
+              languageId: language,
+              status: status ? 'Accepted' : 'Wrong Answer',
+              submittedAt: new Date(),
+            },
+          ],
+        });
+      } catch (error: any) {
+        setProblemSubmissionLoading(false);
+        setProblemSubmissionStatus('Rejected');
+
+        if (error?.response) {
+          console.error('API error response:', error.response.data); // ตรวจสอบข้อผิดพลาดที่ได้รับจาก API
+        } else {
+          console.error('Unexpected error:', error);
+        }
+
+        await updateSubmitMutateAsync({
+          id: user?._id as string,
+          newsubmission: {
+            problemId: problemname?.slice(0, 24) as string,
+            languageId: language,
+            status: 'Wrong Answer',
+            submissionId: submissionId,
+            submittedAt: new Date(),
+          },
+        });
+
+        setProblemSubmissions((prev) => [
+          ...prev,
+          {
+            problemId: problemname?.slice(0, 24) as string,
+            languageId: language,
+            status: 'Wrong Answer',
+            submissionId: submissionId,
+            submittedAt: new Date(),
+          },
+        ]);
+        console.log(error);
+      }
+    }
+  };
 
   return (
     <Layout
@@ -402,31 +422,25 @@ export default function Problem() {
       executionLoading={submissionStatusLoading}
       submitionLoading={problemSubmissionLoading}
       problemSubmitHandler={onSubmitHandler}
-      className="problem-layout"
+      className='problem-layout'
       showFooter={false}
     >
       <div
         ref={containerRef}
-        className={`tw-gap-0.5 tw-h-full problem-container ${
-          isLeftPanelExpanded || isRightPanelExpanded
-            ? 'expanded'
-            : isLeftPanelOnlyShrinked
-            ? 'leftshrinked'
-            : isRightPanelOnlyShrinked
-            ? 'rightshrinked'
-            : ''
-        }`}
+        className={`tw-gap-0.5 tw-h-full problem-container ${isLeftPanelExpanded || isRightPanelExpanded ? 'expanded' : isLeftPanelOnlyShrinked ? 'leftshrinked' : isRightPanelOnlyShrinked ? 'rightshrinked' : ''}`}
         style={
           isResizeActive
-            ? { gridTemplateColumns: getGridTemplateColumns(sizes.div1, sizes.div2) }
+            ? {
+                gridTemplateColumns: `${getGridTemplateColumns(sizes.div1, sizes.div2)}`,
+              }
             : undefined
         }
       >
-        {isResizeActive && <div onMouseDown={startDragging} className="problem-resizer" />}
-        
+        {isResizeActive && <div onMouseDown={startDragging} className='problem-resizer'></div>}
         {isLeftPanelOnlyShrinked ? (
+          // !left Sidepanel
           <div
-            className="tw-flex tw-flex-col tw-justify-between tw-w-full tw-h-full tw-p-2 tw-border-2 tw-rounded-lg"
+            className='tw-flex tw-flex-col tw-justify-between tw-w-full tw-h-full tw-p-2 tw-border-2 tw-rounded-lg'
             style={{
               backgroundColor: colorMode === 'light' ? 'white' : '#24292e',
               borderColor: colorMode === 'light' ? '#c5c9cb' : '#ffffff12',
@@ -440,23 +454,27 @@ export default function Problem() {
           >
             <CustomTabs
               tabs={firstPanelTabLabels}
-              writingMode="vertical-lr"
+              writingMode='vertical-lr'
               className={colorMode === 'dark' ? '!tw-text-white' : ''}
               value={leftTab}
               onChange={(event: React.SyntheticEvent, value: any) => handleTabChange(event, value, 'firstpaneltabs')}
-              orientation="vertical"
-            />
-            <IconButton title="Unfold" onClick={() => {
-              editorRef.current?.layout({ width: 771, height: 436 });
-              expandRightPanel();
-            }}>
-              <ChevronRightOutlinedIcon fontSize="small" />
+              orientation='vertical'
+            ></CustomTabs>
+            <IconButton
+              title='Unfold'
+              onClick={() => {
+                // @ts-ignore
+                editorRef.current.layout(771, 436);
+                expandRightPanel();
+              }}
+            >
+              <ChevronRightOutlinedIcon fontSize='small' />
             </IconButton>
           </div>
         ) : null}
-
+        {/* !first container*/}
         <div
-          className="tw-w-full tw-h-full tw-p-2 tw-border-2 tw-rounded-lg"
+          className={`tw-w-full tw-h-full tw-p-2 tw-border-2 tw-rounded-lg`}
           style={{
             backgroundColor: colorMode === 'light' ? 'white' : '#24292e',
             borderColor: colorMode === 'light' ? '#c5c9cb' : '#ffffff12',
@@ -468,43 +486,48 @@ export default function Problem() {
             ),
           }}
         >
-          <div className="tw-flex tw-items-center tw-justify-between">
+          <div className='tw-flex tw-items-center tw-justify-between'>
             <CustomTabs
               tabs={firstPanelTabLabels}
               className={colorMode === 'dark' ? '!tw-text-white' : ''}
               value={leftTab}
               onChange={(event: React.SyntheticEvent, value: any) => handleTabChange(event, value, 'firstpaneltabs')}
-            />
+            ></CustomTabs>
             <div>
-              <IconButton onClick={toggleRightPanelExpansion} size="small">
+              <IconButton
+                onClick={() => {
+                  toggleRightPanelExpansion();
+                }}
+                size='small'
+              >
                 {!isRightPanelExpanded ? (
-                  <SettingsOverscanOutlinedIcon titleAccess="Maximise" fontSize="small" />
+                  <SettingsOverscanOutlinedIcon titleAccess='Maximise' fontSize='small' />
                 ) : (
-                  <CloseFullscreenOutlinedIcon titleAccess="Minimise" fontSize="small" />
+                  <CloseFullscreenOutlinedIcon titleAccess='Minimise' fontSize='small' />
                 )}
               </IconButton>
               {!isRightPanelExpanded && (
-                <IconButton onClick={shrinkRightHandler} size="small">
+                <IconButton onClick={shrinkRightHandler} size='small'>
                   {!shrinkState.shrinkrightpanel ? (
-                    <ChevronLeftOutlinedIcon titleAccess="Fold" fontSize="small" />
+                    <ChevronLeftOutlinedIcon titleAccess='Fold' fontSize='small' />
                   ) : (
-                    <ChevronRightOutlinedIcon titleAccess="UnFold" fontSize="small" />
+                    <ChevronRightOutlinedIcon titleAccess='UnFold' fontSize='small' />
                   )}
                 </IconButton>
               )}
             </div>
           </div>
           <CustomTabPanel value={leftTab} index={0}>
-            <ProblemDescription problem={problemInfo} serialNo={problemname?.slice(24)} />
+            <ProblemDescription problem={problemInfo} serialNo={problemname?.slice(24)}></ProblemDescription>
           </CustomTabPanel>
           <CustomTabPanel value={leftTab} index={1}>
-            {problemsubmissions.length ? <ProblemSubmissions data={problemsubmissions} /> : null}
+            {problemsubmissions.length ? <ProblemSubmissions data={problemsubmissions}></ProblemSubmissions> : null}
           </CustomTabPanel>
         </div>
-
         {isRightPanelOnlyShrinked ? (
+          // !Right Sidepanel
           <div
-            className="tw-p-2 tw-border-2 tw-rounded-lg tw-h-full tw-flex tw-flex-col tw-justify-between"
+            className={`tw-p-2 tw-border-2 tw-rounded-lg tw-h-full tw-flex tw-flex-col tw-justify-between`}
             style={{
               backgroundColor: colorMode === 'light' ? 'white' : '#24292e',
               borderColor: colorMode === 'light' ? '#c5c9cb' : '#ffffff12',
@@ -520,18 +543,19 @@ export default function Problem() {
               className={colorMode === 'dark' ? 'tw-text-white !tw-min-w-12' : '!tw-min-w-12'}
               onChange={(event: React.SyntheticEvent, value: any) => handleTabChange(event, value, 'secondpaneltabs')}
               value={currentTab}
-              orientation="vertical"
+              orientation='vertical'
               tabs={secondPanelTabLabels}
-              writingMode="vertical-lr"
+              writingMode='vertical-lr'
             />
             <IconButton onClick={expandLeftPanel}>
-              <ChevronLeftOutlinedIcon titleAccess="Fold" fontSize="small" />
+              <ChevronLeftOutlinedIcon titleAccess='Fold' fontSize='small' />
             </IconButton>
           </div>
         ) : null}
 
+        {/* //!second section */}
         <div
-          className="tw-p-2 tw-border-2 tw-rounded-lg tw-h-full tw-order-3"
+          className={`tw-p-2 tw-border-2 tw-rounded-lg tw-h-full tw-order-3`}
           style={{
             backgroundColor: colorMode === 'light' ? 'white' : '#24292e',
             borderColor: colorMode === 'light' ? '#c5c9cb' : '#ffffff12',
@@ -542,102 +566,104 @@ export default function Problem() {
             ),
             display: isRightPanelExpanded || shrinkState.shrinkleftpanel ? 'none' : 'block',
             width: isResizeActive ? `${sizes.div2}%` : '100%',
-            height: isResizeActive ? 'calc(100% - 70px)' : '100%',
+            height: isResizeActive ? `calc(100% - 70px)` : '100%',
             position: isResizeActive ? 'absolute' : 'static',
             right: isResizeActive ? 0 : 'initial',
           }}
         >
-          <div className="tw-flex tw-items-center tw-justify-between">
+          <div className='tw-flex tw-items-center tw-justify-between'>
             <CustomTabs
               value={currentTab}
               tabs={secondPanelTabLabels}
               className={colorMode === 'dark' ? 'tw-text-white' : ''}
               onChange={(event: React.SyntheticEvent, value: any) => handleTabChange(event, value, 'secondpaneltabs')}
-            />
+            ></CustomTabs>
             <div>
-              <IconButton onClick={toggleLeftPanelExpansion} size="small">
+              <IconButton onClick={toggleLeftPanelExpansion} size='small'>
                 {!isLeftPanelExpanded ? (
-                  <SettingsOverscanOutlinedIcon titleAccess="Maximise" fontSize="small" />
+                  <SettingsOverscanOutlinedIcon titleAccess='Maximise' fontSize='small' />
                 ) : (
-                  <CloseFullscreenOutlinedIcon titleAccess="Minimise" fontSize="small" />
+                  <CloseFullscreenOutlinedIcon titleAccess='Minimise' fontSize='small' />
                 )}
               </IconButton>
               {!isLeftPanelExpanded && (
-                <IconButton onClick={shrinkLeftHandler} size="small">
+                <IconButton onClick={shrinkLeftHandler} size='small'>
                   {!shrinkState.shrinkleftpanel ? (
-                    <ChevronLeftOutlinedIcon titleAccess="Fold" fontSize="small" />
+                    <ChevronLeftOutlinedIcon titleAccess='Fold' fontSize='small' />
                   ) : (
-                    <ChevronRightOutlinedIcon titleAccess="UnFold" fontSize="small" />
+                    <ChevronRightOutlinedIcon titleAccess='UnFold' fontSize='small' />
                   )}
                 </IconButton>
               )}
             </div>
           </div>
-          <CustomTabPanel innerDivClassName="tw-h-full" value={currentTab} index={0}>
-            <div className="tw-h-[73dvh]">
-              <div className="tw-border-b-2 tw-p-2 tw-border-b-[#ffffff12] tw-flex tw-justify-between tw-items-center">
+          <CustomTabPanel innerDivClassName='tw-h-full' value={currentTab} index={0}>
+            <div className='tw-h-[73dvh]'>
+              <div className='tw-border-b-2 tw-p-2 tw-border-b-[#ffffff12] tw-flex tw-justify-between tw-items-center'>
                 <LanguageDropDown
                   languagestoskip={problemInfo?.languagestoskip ?? ([] as number[])}
-                  label="supported language"
+                  label='supported language'
                   language={language}
                   handleChange={handleChange}
                 />
                 <div>
-                  <IconButton onClick={toggleFullScreen} size="small">
+                  <IconButton onClick={() => toggleFullScreen()} size='small'>
                     {isFullScreenEnabled ? (
-                      <CloseFullscreenOutlinedIcon titleAccess="Exit FullScreen" fontSize="small" />
+                      <CloseFullscreenOutlinedIcon titleAccess='Exit FullScreen' fontSize='small' />
                     ) : (
-                      <OpenInFullOutlinedIcon titleAccess="FullScreen" fontSize="small" />
+                      <OpenInFullOutlinedIcon titleAccess='FullScreen' fontSize='small' />
                     )}
                   </IconButton>
                   <IconButton
-                    size="small"
+                    size='small'
                     onClick={() => {
-                      const starterCode = problemInfo?.starterCode?.find((s) => s.lang_id === language)?.code ?? '';
                       setCode((prev) => ({
                         ...prev,
-                        [language]: starterCode,
+                        [language]: problemInfo?.starterCode.find((s) => s.lang_id == language)?.code ?? '',
                       }));
-                      if (editorRef.current) editorRef.current.setValue(starterCode);
                     }}
                   >
-                    <RestoreOutlinedIcon titleAccess="Restore" fontSize="small" />
+                    <RestoreOutlinedIcon titleAccess='Restore' fontSize='small' />
                   </IconButton>
                 </div>
               </div>
               <CodeEditor
                 onMount={(editor) => {
                   editorRef.current = editor;
-                  const savedCode = code[language] || problemInfo?.starterCode?.find((s) => s.lang_id === language)?.code || '';
-                  editor.setValue(savedCode);
                 }}
-                onChange={async (changedCode) => {
-                  if (changedCode !== undefined) {
-                    await saveUserCode(problemname?.slice(0, 24) as string, language, changedCode);
-                    setCode((prev) => ({ ...prev, [language]: changedCode }));
+                onChange={async (changedcode) => {
+                  if (changedcode) {
+                    await saveUserCode(problemname?.slice(0, 24) as string, language, changedcode as string);
+                    setCode((prev) => {
+                      const copy = { ...prev };
+                      if (copy[language]) {
+                        copy[language] = changedcode;
+                      }
+                      return copy;
+                    });
                   }
                 }}
                 code={code[language]}
                 language={supportedLanguages[language].toLowerCase()}
                 theme={colorMode === 'light' ? 'mylightTheme' : 'mydarkTheme'}
-              />
+              ></CodeEditor>
             </div>
           </CustomTabPanel>
           <CustomTabPanel value={currentTab} index={1}>
             {(submissionStatusLoading && isSumbitted) || submissionStatusInprocess ? (
-              <Stack className="tw-h-[75dvh]" spacing={2}>
+              <Stack className='tw-h-[75dvh]' spacing={2}>
                 <SkeletonResultsLoader />
               </Stack>
             ) : !submissionStatusLoading && submissionStatusError ? (
-              <div className="tw-h-[75dvh]" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography variant="body2">Some Error Occurred Please Try Again</Typography>
+              <div className='tw-h-[75dvh]' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography variant='body2'>Some Error Occurred Please Try Again</Typography>
               </div>
             ) : !isSumbitted && !problemRunStatus.length ? (
-              <div className="tw-h-[75dvh]" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography variant="body2">You must run your code first</Typography>
+              <div className='tw-h-[75dvh]' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography variant='body2'>You must run your code first</Typography>
               </div>
             ) : problemRunStatus.length ? (
-              <Stack spacing={2} className="tw-h-[75dvh]">
+              <Stack spacing={2} className='tw-h-[75dvh]'>
                 <Tabs
                   className={colorMode === 'dark' ? 'tw-text-white' : ''}
                   value={submissionTab}
@@ -650,43 +676,44 @@ export default function Problem() {
                       key={i}
                       className={colorMode === 'dark' ? 'tw-text-white min-w-12' : 'min-w-12'}
                       label={
-                        <div className="tw-flex tw-gap-1 tw-items-center">
+                        <div className='tw-flex tw-gap-1 tw-items-center'>
                           <FiberManualRecordIcon
                             color={s.status.description === 'Accepted' ? 'success' : 'error'}
                             sx={{ fontSize: '0.7em' }}
-                            fontSize="small"
+                            fontSize='small'
                           />
                           <span>{`Case ${i + 1}`}</span>
                         </div>
                       }
                       {...a11yProps(i)}
-                    />
+                    ></Tab>
                   ))}
                 </Tabs>
-                {problemInfo?.metadata.variables_names &&
-                  problemRunStatus.map((s, i) => {
-                    const inputValues = s.stdin.split('\n');
-                    return (
-                      <CustomTabPanel index={i} key={`language${s.language_id}`} value={submissionTab}>
-                        <ProblemResults
-                          inputValues={inputValues}
-                          variables={Object.values(problemInfo.metadata.variables_names)}
-                          standardOutput={s.stdout}
-                          expectedOutput={s.expected_output}
-                        />
-                      </CustomTabPanel>
-                    );
-                  })}
+                {problemInfo?.metadata.variables_names != undefined
+                  ? problemRunStatus.map((s, i) => {
+                      const inputvalues = s.stdin.split('\n');
+                      return (
+                        <CustomTabPanel index={i} key={`language${s.language_id}`} value={submissionTab}>
+                          <ProblemResults
+                            inputValues={inputvalues}
+                            variables={Object.values(problemInfo?.metadata.variables_names)}
+                            standardOutput={s.stdout}
+                            expectedOutput={s.expected_output}
+                          />
+                        </CustomTabPanel>
+                      );
+                    })
+                  : null}
               </Stack>
             ) : (
-              <div className="tw-h-[75dvh]">
+              <div className='tw-h-[75dvh]'>
                 <SkeletonResultsLoader />
               </div>
             )}
           </CustomTabPanel>
           <CustomTabPanel value={currentTab} index={2}>
             {problemSubmissionLoading ? (
-              <Stack className="tw-h-[90dvh]" spacing={2}>
+              <Stack className='tw-h-[90dvh]' spacing={2}>
                 <SkeletonResultsLoader />
               </Stack>
             ) : (
