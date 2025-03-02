@@ -7,6 +7,7 @@ import { useLocation } from 'react-router';
 import { useEffect } from 'react';
 import { useAuthSlice } from '../../../store/authslice/auth';
 import { useUserSlice } from '../../../store/user';
+import ProblemsSetAdmin from '../../ProblemsAdmin';
 
 function Home() {
   const isLogedIn = useAuthSlice((state) => state.isLogedIn);
@@ -30,10 +31,7 @@ function Home() {
   return (
     <>
       <HomeNavbar />
-      <main className='tw-mt-4'>
-        <ProblemsSet />
-      </main>
-      <Footer />
+      <main className='tw-mt-4'>{user?.roles.includes('admin') ? <ProblemsSetAdmin /> : <ProblemsSet />}</main>
     </>
   );
 }

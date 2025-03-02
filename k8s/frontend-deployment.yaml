@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
+  namespace: tourist
 spec:
   replicas: 2
   selector:
@@ -14,14 +15,22 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: asia-southeast1-docker.pkg.dev/tourist-452409/frontend:latest
+          image: asia-southeast1-docker.pkg.dev/tourist-452409/tourist-repo/frontend:latest
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: frontend-service
+  namespace: tourist
 spec:
   type: LoadBalancer
   selector:
@@ -30,3 +39,28 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend-ingress
+  namespace: tourist
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+    - hosts:
+        - porametix.online
+      secretName: frontend-tls
+  rules:
+    - host: porametix.online
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 80

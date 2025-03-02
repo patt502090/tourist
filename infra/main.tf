@@ -1,55 +1,59 @@
 provider "google" {
-  project = "tourist-452409"  
-  region  = "asia-southeast1"  
+  project = "tourist-452409"
+  region  = "asia-southeast1"
+}
+
+# สร้าง Artifact Registry Repository
+resource "google_artifact_registry_repository" "tourist_repo" {
+  location      = "asia-southeast1"
+  repository_id = "tourist-repo"
+  format        = "DOCKER"
 }
 
 # สร้าง GKE Cluster
 resource "google_container_cluster" "tourist_cluster" {
   name     = "tourist-cluster"
   location = "asia-southeast1"
-  initial_node_count = 3
+  # ลบ initial_node_count ออก เพราะจะกำหนดใน node_pool
 
-  # การตั้งค่า Node Pools
+  # ลบ node_config ออก เพราะจะย้ายไป node_pool
+
+  # Enable HTTP Load Balancing
+  addons_config {
+    http_load_balancing {
+      disabled = false
+    }
+  }
+
+  # ลบ initial_node_count เพื่อให้ใช้ node_pool แทน
+  remove_default_node_pool = true
+  initial_node_count       = 1  # ต้องมีค่าเริ่มต้นก่อนลบ default pool
+}
+
+# สร้าง Node Pool แยกพร้อม Auto-scaling
+resource "google_container_node_pool" "primary_nodes" {
+  name       = "primary-node-pool"
+  cluster    = google_container_cluster.tourist_cluster.name
+  location   = "asia-southeast1"
+  node_count = 1  # จำนวน node เริ่มต้น
+
   node_config {
-    machine_type = "e2-medium" 
-    disk_size_gb = 20 
+    machine_type = "e2-medium"
+    disk_size_gb = 20
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform",
     ]
   }
 
-  # Enable Auto-scaling 
+  # ตั้งค่า Auto-scaling
   autoscaling {
     min_node_count = 1
     max_node_count = 5
   }
 
-  # Enable Load Balancer
-  enable_http_load_balancing = true
-
-  # Enable Kubernetes Dashboard
-  enable_kubernetes_dashboard = true
-}
-
-resource "google_compute_instance" "tourist_vm" {
-  name         = "tourist-vm"
-  machine_type = "e2-medium"
-  zone         = "asia-southeast1-a"
-
-  boot_disk {
-    initialize_params {
-      image = "debian-cloud/debian-12"
-    }
+  # การจัดการ Node Pool
+  management {
+    auto_repair  = true
+    auto_upgrade = true
   }
-
-  network_interface {
-    network = "default"
-    access_config {}  # เปิด External IP
-  }
-
-  metadata_startup_script = <<-EOF
-    #! /bin/bash
-    apt update && apt install -y docker.io
-    systemctl start docker
-  EOF
 }
