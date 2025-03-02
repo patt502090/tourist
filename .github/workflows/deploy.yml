@@ -71,7 +71,12 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
       - name: Install gke-gcloud-auth-plugin
         run: |
-          gcloud components install gke-gcloud-auth-plugin -q
+          sudo apt-get install -y apt-transport-https ca-certificates gnupg
+          echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+          sudo apt-get update
+          sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
+          sudo apt-get update
       - name: Get GKE Credentials
         run: gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}
       - name: Deploy to GKE
