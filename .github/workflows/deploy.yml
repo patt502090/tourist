@@ -79,6 +79,8 @@ jobs:
           sudo apt-get update
       - name: Get GKE Credentials
         run: gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}
+      - name: Create Namespace
+        run: kubectl create namespace tourist --dry-run=client -o yaml | kubectl apply -f -
       - name: Deploy to GKE
         run: |
           kubectl apply -f ./k8s/backend-deployment.yaml
