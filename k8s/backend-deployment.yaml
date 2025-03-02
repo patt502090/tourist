@@ -64,5 +64,5 @@ metadata:
   namespace: tourist
 type: Opaque
 data:
-  mongodb-connection-string: bW9uZ29kYjovL1NEQTIyOjpTREFQMjI5QGNsdXN0ZXIwLmMyenJvLm1vbmdvZGIubmV0Lz9yZXRyeVdyaXRlcz10cnVlJnc9bWFqb3JpdHkmYXBwTmFtZT1DbHVzdGVyMA==
+  mongodb-connection-string: bW9uZ29kYitzcnY6Ly9TREEyMjk6U0RBMjI5QGNsdXN0ZXIwLmMyenJvLm1vbmdvZGIubmV0Lz9yZXRyeVdyaXRlcz10cnVlJnc9bWFqb3JpdHkmYXBwTmFtZT1DbHVzdGVyMA==
   jwt-secret: N2QzZjJlMWI5YzhhNWQ0ZjZlM2IyYTFjOWQ4ZTdmNmI1YTRkM2MyYjFlOWY4ZDc=
