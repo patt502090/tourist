@@ -221,6 +221,7 @@ export default function Problem() {
     async function getData<T extends submission>(response: T) {
       if (!['Processing', 'In Queue'].includes(response?.status?.description)) {
         setSubmissionStatusInProcess(false);
+        console.log('Submission result:', response);
         return response;
       }
       try {
