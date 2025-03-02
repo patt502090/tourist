@@ -15,10 +15,13 @@ async function bootstrap() {
   app.useWebSocketAdapter(new IoAdapter(app));
 
   app.use(cookieParser());
+  // app.enableCors({
+  //   origin: process.env.FRONTEND_ORIGIN
+  //     ? process.env.FRONTEND_ORIGIN
+  //     : 'http://localhost:5173',
+  //   credentials: true,
   app.enableCors({
-    origin: process.env.FRONTEND_ORIGIN
-      ? process.env.FRONTEND_ORIGIN
-      : 'http://localhost:5173',
+    origin: process.env.FRONTEND_ORIGIN,
     credentials: true,
   });
 
