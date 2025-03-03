@@ -7,7 +7,7 @@ import {
   Min,
 } from 'class-validator';
 import { codesnipet, metadata } from 'src/interfaces/config.interface';
-import { testcase } from 'src/schemas/problem.schema'; // แก้ path เป็นตัวพิมพ์เล็กให้สอดคล้องกับ convention
+import { testcase } from 'src/Schemas/problem.schema'; // แก้ path เป็นตัวพิมพ์เล็กให้สอดคล้องกับ convention
 
 export class CreateProblemDto {
   @IsNotEmpty()

@@ -24,7 +24,8 @@ import { SessionGuard } from 'src/sessiontoken/session.guard';
 export class ProblemsController {
   constructor(private readonly problemsService: ProblemsService) {}
 
-  @UseGuards(AuthGuard, RolesGaurd, SessionGuard)
+  @UseGuards(AuthGuard, SessionGuard)
+  // @UseGuards(RolesGaurd)
   @Post('createProblem/:userId')
   @Roles(Role.Admin)
   async create(@Body() createProblemDto: CreateProblemDto) {
@@ -61,7 +62,8 @@ export class ProblemsController {
   }
 
   @Roles(Role.Admin)
-  @UseGuards(AuthGuard, RolesGaurd, SessionGuard)
+  @UseGuards(RolesGaurd, SessionGuard)
+  // @UseGuards(RolesGaurd)
   @Patch(':id/:userId')
   async update(
     @Param('id') id: ObjectId,

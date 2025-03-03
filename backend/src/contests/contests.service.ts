@@ -3,9 +3,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CreateContestDto } from './dto/create-contest.dto';
 import { UpdateContestDto } from './dto/update-contest.dto';
-import { Contest } from 'src/schemas/contest.schema';
-import { User } from 'src/schemas/user.schema';
-import { Problem } from 'src/schemas/problem.schema';
+import { Contest } from 'src/Schemas/contest.schema';
+import { User } from 'src/Schemas/user.schema';
+import { Problem } from 'src/Schemas/problem.schema';
 
 @Injectable()
 export class ContestsService {

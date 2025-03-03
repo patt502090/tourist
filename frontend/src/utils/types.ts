@@ -26,6 +26,8 @@ export interface Problem {
   imports: { lang_id: number; code: string }[];
   metadata: metadata;
   languagestoskip: number[];
+  contestId?: string;
+  points?: number;
 }
 
 
@@ -106,6 +108,7 @@ export interface submission {
   };
   expected_output: string;
 }
+
 export interface problemsubmission {
   problemId: string;
   submissionId: string;
