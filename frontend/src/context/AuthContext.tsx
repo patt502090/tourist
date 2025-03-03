@@ -5,7 +5,7 @@ import { useUserSlice } from '../store/user';
 import { useProblemSlice } from '../store/problemSlice/problem';
 import { useQuery } from '@tanstack/react-query';
 import getProblems from '../services/getProblems';
-import getContests from '../services/getContests'; // สมมติว่ามี service นี้
+import getContests from '../services/getContests';
 import { useContestSlice } from '../store/contestSlice/contest';
 
 export const AuthContext = createContext<authCtx>({ isLoading: false, isError: false, error: null });
@@ -32,7 +32,6 @@ export const AuthContextWrapper: FC<contextWrapperProps> = ({ children }) => {
     refetchOnWindowFocus: false,
   });
 
-  // Fetch contests
   const {
     data: contestsData,
     isLoading: contestsLoading,
@@ -44,27 +43,31 @@ export const AuthContextWrapper: FC<contextWrapperProps> = ({ children }) => {
     refetchOnWindowFocus: false,
   });
 
-  // เช็ค session
+  // Check session
   useEffect(() => {
     if (!['/signin', '/signup'].includes(window.location.pathname)) {
       checkSession();
     }
   }, []);
 
-  // อัปเดตปัญหา (problems) ใน state
+  // Update contests in state
+  useEffect(() => {
+    if (contestsData) {
+      const contests = Array.isArray(contestsData) ? contestsData : contestsData.data || [];
+      setContests(contests);
+      // console.log('Contests set in store:', contests);
+    }
+  }, [contestsData, setContests]);
+
+  // Update problems in state
   useEffect(() => {
     if (problemsData?.data) {
       setProblems(problemsData.data);
+      // console.log('Problems set in store:', problemsData.data);
     }
-  }, [problemsData]);
+  }, [problemsData, setProblems]);
 
-  useEffect(() => {
-    if (contestsData?.data) {
-      setContests(contestsData.data);
-    }
-  }, [contestsData]);
-
-  // จัดการ session login
+  // Handle session login
   useEffect(() => {
     if (sessionLoading === 'Completed') {
       if (!user) {
@@ -75,10 +78,16 @@ export const AuthContextWrapper: FC<contextWrapperProps> = ({ children }) => {
     }
   }, [sessionLoading, user, signIn]);
 
+  // Debug logs
+  // useEffect(() => {
+  //   console.log('Problems:', { problemsData, problemsLoading, problemsError, problemsFetchError });
+  //   console.log('Contests:', { contestsData, contestsLoading, contestsError, contestsFetchError });
+  // }, [problemsData, contestsData, problemsLoading, contestsLoading]);
+
   return (
     <AuthContext.Provider
       value={{
-        isLoading: problemsLoading || contestsLoading,
+        isLoading: problemsLoading || contestsLoading || sessionLoading === 'Pending',
         isError: problemsError || contestsError,
         error: problemsFetchError || contestsFetchError,
       }}

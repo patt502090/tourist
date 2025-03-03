@@ -6,6 +6,8 @@ import SignUp from './Pages/SignUp/Index';
 // import Contest from './Pages/Contest';
 import ProfilePage from './Pages/Profile';
 import Scoreboard from './Pages/Contests';
+import ContestSet from './Pages/Contest/ContestSet';
+import ContestProblems from './Pages/Contest';
 
 const router = createBrowserRouter([
   {
@@ -28,10 +30,10 @@ const router = createBrowserRouter([
     path: '/contests',
     element: <Scoreboard/>,
   },
-  // {
-  //   path: '/contests/:contestId',
-  //   element: <Contest />,
-  // },
+  {
+    path: '/contests/:contestId',
+    element: <ContestProblems />,
+  },
   {
     path: '*',
     element: <Home />,

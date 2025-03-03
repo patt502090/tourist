@@ -6,9 +6,9 @@ import { useEffect } from 'react';
 import { useAuthSlice } from '../../../store/authslice/auth';
 import { useUserSlice } from '../../../store/user';
 import HomeNavbar from '../Home/HomeNavbar';
-import ContestsSet from './ContestsSet';
+import ContestSet from './ContestSet';
 
-function Contests() {
+function ContestProblems() {
   const isLogedIn = useAuthSlice((state) => state.isLogedIn);
   const user = useUserSlice((state) => state.user);
   const setUser = useUserSlice((state) => state.setUser);
@@ -31,11 +31,11 @@ function Contests() {
     <>
       <HomeNavbar />
       <main className='tw-mt-4'>
-        <ContestsSet />
+        <ContestSet/>
       </main>
       <Footer />
     </>
   );
 }
 
-export default Contests;
+export default ContestProblems;
