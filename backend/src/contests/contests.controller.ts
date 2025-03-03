@@ -31,4 +31,9 @@ export class ContestsController {
   remove(@Param('id') id: string) {
     return this.contestsService.remove(id);
   }
+
+  @Put(':id/participants')
+  async addParticipant(@Param('id') contestId: string, @Body('userId') userId: string) {
+    return this.contestsService.addParticipant(contestId, userId);
+  }
 }

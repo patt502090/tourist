@@ -1,10 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 import * as mongoose from 'mongoose';
 import { Problem } from './problem.schema';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/enums/roles.enum';
 import { supportedlanguages } from 'src/interfaces/config.interface';
+import { Contest } from './contest.schema';
 export type UserDocument = HydratedDocument<User>;
 
 @Schema()
@@ -28,6 +29,12 @@ export class User {
     status: string;
     submittedAt: Date;
   }[];
+
+  @Prop({
+    type: [{ type: Types.ObjectId, ref: () => Contest }], 
+    default: [],
+  })
+  contests: Types.ObjectId[];
 
   @Prop()
   hashedpassword: string;
