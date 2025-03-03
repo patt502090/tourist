@@ -256,165 +256,201 @@ export default function Problem() {
   const onClickHandler = async () => {
     if (!isLogedIn) {
       navigate('/signin');
-      return; // ให้หยุดการทำงานหากไม่ได้ล็อกอิน
+      return;
     }
 
-    if (editorRef.current && problemInfo) {
-      try {
-        // ตรวจสอบ problemInfo และ arrays ก่อนใช้ .find()
-        const importCode = problemInfo.imports?.find((s) => s.lang_id == language)?.code ?? '';
-        const systemCode = problemInfo.systemCode?.find((s) => s.lang_id == language)?.code ?? '';
+    if (!editorRef.current || !problemInfo) {
+      console.error('Editor or problem info missing');
+      return;
+    }
 
-        const code = `${importCode} \n${editorRef.current.getValue()} \n${systemCode}`;
+    try {
+      const importCode = problemInfo.imports?.find((s) => s.lang_id === language)?.code ?? '';
+      const systemCode = problemInfo.systemCode?.find((s) => s.lang_id === language)?.code ?? '';
+      const userCode =
+        editorRef.current.getValue() ||
+        code[language] ||
+        problemInfo.starterCode?.find((s) => s.lang_id === language)?.code ||
+        '// No code provided';
 
-        setIsSumbitted(true);
-        setCurrentTab(1);
-
-        const testcases = problemInfo?.testCases;
-        if (testcases && testcases.length > 0) {
-          const [firsttestcase] = testcases;
-          const response = await mutateAsync({
-            code,
-            expected_output: firsttestcase.output,
-            input: firsttestcase.input,
-            language_id: language,
-          });
-          setSubmissionId(response?.data.token);
-          await getSubmission(response?.data.token);
-        } else {
-          console.log('No test cases available');
-        }
-      } catch (error) {
-        setIsSumbitted(false);
-        console.log(error);
+      console.log('User code for execution:', userCode); // Debug
+      if (!userCode.trim() || userCode === '// No code provided') {
+        console.error('No code to execute');
+        alert('Please provide code to execute');
+        return;
       }
+
+      const fullCode = `${importCode}\n${userCode}\n${systemCode}`;
+      console.log('Full code for execution:', fullCode); // Debug
+
+      setIsSumbitted(true);
+      setCurrentTab(1);
+
+      const testcases = problemInfo.testCases;
+      if (testcases?.length) {
+        const [firstTestcase] = testcases;
+        const response = await mutateAsync({
+          code: fullCode,
+          expected_output: firstTestcase.output,
+          input: firstTestcase.input,
+          language_id: language,
+        });
+        setSubmissionId(response?.data.token);
+        await getSubmission(response?.data.token);
+      } else {
+        console.error('No test cases available');
+      }
+    } catch (error) {
+      setIsSumbitted(false);
+      console.error('Execution error:', error);
     }
   };
 
   const onSubmitHandler = async () => {
     if (!isLogedIn) {
       navigate('/signin');
+      return;
     }
 
-    if (editorRef.current && problemInfo) {
-      const submissionbatch = [];
-      const testcases = problemInfo?.testCases;
+    if (!editorRef.current || !problemInfo) {
+      console.error('Editor or problem info missing');
+      return;
+    }
 
-      // ตรวจสอบว่า imports และ systemCode มีค่าหรือไม่ก่อนเรียก .find()
-      const importCode = problemInfo.imports?.find((s) => s.lang_id == language)?.code ?? '';
-      const systemCode = problemInfo.systemCode?.find((s) => s.lang_id == language)?.code ?? '';
+    const userCode =
+      editorRef.current.getValue() ||
+      code[language] ||
+      problemInfo.starterCode?.find((s) => s.lang_id === language)?.code ||
+      '// No code provided';
+    console.log('User code for submission:', userCode);
 
-      // ถ้าไม่พบข้อมูลให้แจ้งเตือน
-      if (!importCode || !systemCode) {
-        console.log('Code snippets not found for the selected language');
+    if (!userCode.trim() || userCode === '// No code provided') {
+      console.error('No code provided in the editor');
+      alert('Please provide code before submitting');
+      return;
+    }
+
+    const importCode = problemInfo.imports?.find((s) => s.lang_id === language)?.code ?? '';
+    const systemCode = problemInfo.systemCode?.find((s) => s.lang_id === language)?.code ?? '';
+    const fullCode = `${importCode}\n${userCode}\n${systemCode}`;
+    console.log('Full code for submission:', fullCode);
+
+    const testcases = problemInfo.testCases;
+    if (!testcases?.length) {
+      console.error('No test cases found');
+      return;
+    }
+
+    const submissionBatch = testcases.map(({ input, output }, i) => {
+      // If output is missing, compute it for palindrome logic
+      let expectedOutput = output?.trim();
+      if (!expectedOutput) {
+        console.warn(`Testcase ${i} has no expected output in problemInfo, computing locally`);
+        const inputStr = input?.replace(/"/g, '') || ''; // Remove quotes (e.g., "madam" -> madam)
+        const isPalindrome = inputStr === inputStr.split('').reverse().join('');
+        expectedOutput = isPalindrome ? 'True' : 'False'; // Python boolean as string
       }
+      console.log(`Testcase ${i} input: ${input}, expected_output: ${expectedOutput}`);
 
-      const code = `${importCode} \n ${editorRef.current.getValue()} \n ${systemCode}`;
+      return {
+        language_id: language,
+        source_code: fullCode,
+        stdin: input || '',
+        expected_output: expectedOutput,
+      };
+    });
 
-      if (!testcases || testcases.length === 0) {
-        console.log('No test cases found');
+    try {
+      setCurrentTab(2);
+      setProblemSubmissionLoading(true);
+
+      console.log('Sending submission batch:', JSON.stringify(submissionBatch, null, 2));
+      const batchwiseResponse = await batchwiseSubmission(submissionBatch);
+
+      if (!batchwiseResponse?.length) {
+        console.error('No response from batchwise submission');
+        setProblemSubmissionLoading(false);
         return;
       }
 
-      for (let index = 0; index < testcases.length; index++) {
-        const { input, output } = testcases[index];
-        submissionbatch.push({
-          language_id: language,
-          source_code: code,
-          stdin: input,
-          expected_output: output,
-        });
+      const batchPromises = batchwiseResponse.map((sub) => getSubmission(sub.token));
+      const batchResults = await Promise.all(batchPromises);
+      setProblemSubmissionLoading(false);
+
+      const filteredResults = batchResults.filter((result): result is submission => !!result);
+      if (!filteredResults.length) {
+        console.error('No valid submission results');
+        return;
       }
 
-      try {
-        setCurrentTab(2);
-        setProblemSubmissionLoading(true);
+      const { status, successcount } = getResult(filteredResults);
+      setSuccessCount(successcount);
+      setProblemSubmissionStatus(status ? 'Accepted' : 'Rejected');
 
-        // ส่งข้อมูล batchwise
-        console.log('Sending submission batch:', submissionbatch);
-        const batchwiseresponse = await batchwiseSubmission(submissionbatch);
+      const submissionBody: problemsubmissionstatus = {
+        problemId: problemname?.slice(0, 24) as string,
+        languageId: language,
+        status: status ? 'Accepted' : 'Wrong Answer',
+        submissionId: batchwiseResponse[0]?.token || '',
+        submittedAt: new Date(),
+      };
 
-        // ตรวจสอบการตอบกลับจาก API
-        if (!batchwiseresponse) {
-          console.log('No response from batchwise submission');
-          setProblemSubmissionLoading(false);
-          return;
-        }
+      const submissionResponse = await updateSubmitMutateAsync({
+        id: user?._id as string,
+        newsubmission: submissionBody,
+      });
 
-        const batchwiseresponsepromises = batchwiseresponse.map((submission) => getSubmission(submission.token));
-
-        const batchwiseresults = await Promise.all(batchwiseresponsepromises);
-        setProblemSubmissionLoading(false);
-
-        const { status, successcount } = getResult(
-          batchwiseresults.filter((result): result is submission => result !== undefined)
-        );
-        setSuccessCount(successcount);
-
-        setProblemSubmissionStatus(status ? 'Accepted' : 'Rejected');
-
-        const updatesubmissionbody = {
-          problemId: problemname?.slice(0, 24) as string,
-          languageId: language,
-          status: status ? 'Accepted' : 'Wrong Answer',
-          submissionId: submissionId,
-          submittedAt: new Date(),
-        };
-
-        const submissionupdateResponse = await updateSubmitMutateAsync({
-          id: user?._id as string,
-          newsubmission: updatesubmissionbody,
-        });
-
-        setProblemSubmissions((prev) => [...prev, updatesubmissionbody]);
-        setUser({
-          ...(user as user),
-          submissions: [
-            ...(user?.submissions ?? []),
-            {
-              problemId: problemname?.slice(0, 24) as string,
-              submissionId: submissionupdateResponse?.data._id as string,
-              languageId: language,
-              status: status ? 'Accepted' : 'Wrong Answer',
-              submittedAt: new Date(),
-            },
-          ],
-        });
-      } catch (error: any) {
-        setProblemSubmissionLoading(false);
-        setProblemSubmissionStatus('Rejected');
-
-        if (error?.response) {
-          console.error('API error response:', error.response.data); // ตรวจสอบข้อผิดพลาดที่ได้รับจาก API
-        } else {
-          console.error('Unexpected error:', error);
-        }
-
-        await updateSubmitMutateAsync({
-          id: user?._id as string,
-          newsubmission: {
-            problemId: problemname?.slice(0, 24) as string,
-            languageId: language,
-            status: 'Wrong Answer',
-            submissionId: submissionId,
-            submittedAt: new Date(),
-          },
-        });
-
-        setProblemSubmissions((prev) => [
-          ...prev,
+      setProblemSubmissions((prev) => [...prev, submissionBody]);
+      setUser({
+        ...(user as user),
+        submissions: [
+          ...(user?.submissions ?? []),
           {
-            problemId: problemname?.slice(0, 24) as string,
-            languageId: language,
-            status: 'Wrong Answer',
-            submissionId: submissionId,
-            submittedAt: new Date(),
+            ...submissionBody,
+            submissionId: submissionResponse?.data._id as string,
+            status: submissionBody.status as 'Accepted' | 'Wrong Answer' | 'Error',
           },
-        ]);
-        console.log(error);
-      }
+        ],
+      });
+    } catch (error: any) {
+      setProblemSubmissionLoading(false);
+      setProblemSubmissionStatus('Rejected');
+      console.error('Submission error:', error.response?.data || error.message);
+
+      const submissionBody: problemsubmissionstatus = {
+        problemId: problemname?.slice(0, 24) as string,
+        languageId: language,
+        status: 'Wrong Answer',
+        submissionId: submissionId || 'unknown',
+        submittedAt: new Date(),
+      };
+
+      await updateSubmitMutateAsync({
+        id: user?._id as string,
+        newsubmission: submissionBody,
+      });
+
+      setProblemSubmissions((prev) => [...prev, submissionBody]);
     }
   };
+
+  if (isProblemLoading) {
+    return (
+      <Backdrop sx={{ color: '#ffffff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
+        <CircularProgress color='inherit' />
+      </Backdrop>
+    );
+  }
+
+  if (isErrorWithProblemInfo) {
+    return (
+      <Layout>
+        <Alert className='tw-mx-auto' severity='error'>
+          {errorInfoProblemFetch?.message}
+        </Alert>
+      </Layout>
+    );
+  }
 
   return (
     <Layout
