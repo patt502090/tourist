@@ -1,26 +1,32 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateContestDto } from './dto/create-contest.dto';
 import { UpdateContestDto } from './dto/update-contest.dto';
+import { Contest } from 'src/Schemas/contest.schema';
 
 @Injectable()
 export class ContestsService {
-  create(createContestDto: CreateContestDto) {
-    return 'This action adds a new contest';
+  constructor(@InjectModel(Contest.name) private contestModel: Model<Contest>) {}
+
+  async create(createContestDto: CreateContestDto): Promise<Contest> {
+    const createdContest = new this.contestModel(createContestDto);
+    return createdContest.save();
   }
 
-  findAll() {
-    return `This action returns all contests`;
+  async findAll(): Promise<Contest[]> {
+    return this.contestModel.find().exec();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} contest`;
+  async findOne(id: string): Promise<Contest> {
+    return this.contestModel.findById(id).exec();
   }
 
-  update(id: number, updateContestDto: UpdateContestDto) {
-    return `This action updates a #${id} contest`;
+  async update(id: string, updateContestDto: UpdateContestDto): Promise<Contest> {
+    return this.contestModel.findByIdAndUpdate(id, updateContestDto, { new: true }).exec();
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} contest`;
+  async remove(id: string): Promise<any> {
+    return this.contestModel.findByIdAndDelete(id).exec();
   }
 }

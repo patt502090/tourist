@@ -1,41 +1,39 @@
-// import Footer from '../../UI/Footer';
-// import { useQuery } from '@tanstack/react-query';
-// import getUser from '../../../services/getUser';
-// import { useLocation } from 'react-router';
-// import { useEffect } from 'react';
-// import { useAuthSlice } from '../../../store/authslice/auth';
-// import { useUserSlice } from '../../../store/user';
-// import HomeNavbar from '../Home/HomeNavbar';
-// import ContestsTable from '../Contests/ContestsTable';
+import { useEffect, useState } from 'react';
+import io from 'socket.io-client';
 
-// function Contest() {
-//   const isLogedIn = useAuthSlice((state) => state.isLogedIn);
-//   const user = useUserSlice((state) => state.user);
-//   const setUser = useUserSlice((state) => state.setUser);
-//   const { state } = useLocation();
-//   const { data, isError, error, isSuccess } = useQuery({
-//     queryKey: ['get-user'],
-//     queryFn: () => getUser(state),
-//     enabled: isLogedIn && state !== '' && state !== null && user == null,
-//   });
-//   useEffect(() => {
-//     if (data && isSuccess) {
-//       setUser(data.data);
-//     }
-//   }, [data, isSuccess]);
-//   if (isError) {
-//     console.log(error);
-//   }
+const socket = io('http://localhost:8081');
 
-//   return (
-//     <>
-//       <HomeNavbar />
-//       <main className='tw-mt-4'>
-//         <ContestsTable />
-//       </main>
-//       <Footer />
-//     </>
-//   );
-// }
+function ContestsList() {
+  const [users, setUsers] = useState([]);
+  const contestId = '67c538c49d5c1d30674ae224';
+  console.log(socket)
+  useEffect(() => {
+    // เข้าร่วม contest
+    socket.emit('joinContest', { contestId, userId: 'user124' });
 
-// export default Contest;
+    // รับการอัปเดตผู้ใช้
+    socket.on('userUpdate', (data) => {
+      setUsers(data.users);
+    });
+
+    // ออกเมื่อ component unmount
+    return () => {
+      socket.emit('leaveContest', contestId);
+      socket.off('userUpdate');
+    };
+  }, [contestId]);
+
+  return (
+    <div>
+      <h1>Contest: {contestId}</h1>
+      <h2>Users in Contest:</h2>
+      <ul>
+        {users.map((userId) => (
+          <li key={userId}>{userId}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default ContestsList;

@@ -5,7 +5,7 @@ import SignIn from './Pages/SignIn/Index';
 import SignUp from './Pages/SignUp/Index';
 // import Contest from './Pages/Contest';
 import ProfilePage from './Pages/Profile';
-import ContestsList from './Pages/Contests';
+import ContestsList from './Pages/Contest';
 
 const router = createBrowserRouter([
   {
