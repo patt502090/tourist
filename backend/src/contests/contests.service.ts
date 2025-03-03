@@ -180,22 +180,37 @@ export class ContestsService {
   }
 
   async addProblem(contestId: string, problemId: string): Promise<Contest> {
+    // Fetch the contest
     const contest = await this.contestModel.findById(contestId).exec();
-    if (!contest)
+    if (!contest) {
       throw new NotFoundException(`Contest with ID ${contestId} not found`);
+    }
 
+    // Check if problem already exists in contest
     if (contest.problems.some((pid) => pid.toString() === problemId)) {
       throw new NotFoundException(
         `Problem ${problemId} already exists in contest ${contestId}`,
       );
     }
 
-    return this.contestModel
+    // Update the contest: add problem to problems array
+    const updatedContest = await this.contestModel
       .findByIdAndUpdate(
         contestId,
         { $push: { problems: new Types.ObjectId(problemId) } },
         { new: true },
       )
       .exec();
+
+    // Update the problem: set contest reference
+    await this.problemModel
+      .findByIdAndUpdate(
+        problemId,
+        { contest: new Types.ObjectId(contestId) },
+        { new: true },
+      )
+      .exec();
+
+    return updatedContest;
   }
 }

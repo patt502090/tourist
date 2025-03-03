@@ -28,7 +28,7 @@ export default function ProblemsSet() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const { isError, isLoading, error } = useAuthContext();
-  const problems = useProblemSlice((state) => state.problems);
+  const allProblems = useProblemSlice((state) => state.problems); // Renamed to avoid confusion
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const handleClose = () => {
     setOpen(false);
@@ -38,6 +38,11 @@ export default function ProblemsSet() {
 
   const user = useUserSlice((state) => state.user);
 
+  // Filter problems to only include those without a contest
+  const problems = useMemo(() => {
+    return allProblems.filter((problem) => !problem.contest || problem.contest === '');
+  }, [allProblems]);
+
   const columns = useMemo(
     () => [
       columnHelper.accessor((row) => row.status, {
@@ -46,14 +51,14 @@ export default function ProblemsSet() {
           let icon;
           if (user) {
             icon = isAccepted(info.row.original._id, user?.submissions) ? (
-              <TaskAltOutlinedIcon titleAccess='Solved' color='success' />
+              <TaskAltOutlinedIcon titleAccess="Solved" color="success" />
             ) : isRejected(info.row.original._id, user?.submissions) ? (
-              <PendingOutlinedIcon titleAccess='Attempted' color='warning' />
+              <PendingOutlinedIcon titleAccess="Attempted" color="warning" />
             ) : null;
           } else {
             icon = null;
           }
-          return <div> {icon}</div>;
+          return <div>{icon}</div>;
         },
         filterFn: 'statusFilter' as any,
       }),
@@ -71,7 +76,11 @@ export default function ProblemsSet() {
       columnHelper.accessor((row) => row.difficulty, {
         id: 'Difficulty',
         cell: (info) => {
-          return <div style={{ color: difficultyColors[info.getValue()] }}>{capitalize(info.getValue())}</div>;
+          return (
+            <div style={{ color: difficultyColors[info.getValue()] }}>
+              {capitalize(info.getValue())}
+            </div>
+          );
         },
         filterFn: 'difficultyFilter' as any,
       }),
@@ -92,24 +101,21 @@ export default function ProblemsSet() {
     filterFns: {
       difficultyFilter: (row, columnId, filterValue) => {
         if (filterValue === 'all') {
-          return row;
+          return true; // Changed to return boolean
         }
         const column = columnId.toLowerCase();
-        const value = filterValue ? row.original[column] === filterValue : row.original[column];
-        return value;
+        return row.original[column] === filterValue;
       },
       titleFilter: (row, columnId, filterValue) => {
         const column = columnId.toLowerCase();
-        // console.log(row.original[column], filterValue);
-        const value = row.original[column].toLowerCase().includes(filterValue.toLowerCase());
-        return value;
+        return row.original[column]?.toLowerCase().includes(filterValue.toLowerCase()) || false;
       },
       statusFilter: (row, _columnId, filterValue) => {
         const acceptedProblems = [
-          ...new Set(user?.submissions.filter((s) => s.status === 'Accepted').map((s) => s.problemId)),
+          ...new Set(user?.submissions?.filter((s) => s.status === 'Accepted').map((s) => s.problemId)),
         ];
         const rejectedProblems = [
-          ...new Set(user?.submissions.filter((s) => s.status === 'Wrong Answer').map((s) => s.problemId)),
+          ...new Set(user?.submissions?.filter((s) => s.status === 'Wrong Answer').map((s) => s.problemId)),
         ];
         const onlyRejectProblems = rejectedProblems.filter((id) => !acceptedProblems.includes(id));
         if (filterValue === 'solved') {
@@ -123,6 +129,7 @@ export default function ProblemsSet() {
       },
     },
   });
+
   const handleDifficultyChange = (event: SelectChangeEvent) => {
     setDifficultyFilter(event.target.value);
     table.getColumn('Difficulty')?.setFilterValue(event.target.value);
@@ -142,11 +149,9 @@ export default function ProblemsSet() {
 
   if (isLoading) {
     return (
-      <>
-        <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
-          <CircularProgress color='inherit' />
-        </Backdrop>
-      </>
+      <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
     );
   }
 
@@ -155,27 +160,25 @@ export default function ProblemsSet() {
   }
 
   return (
-    <>
-      <ProblemsTable
-        handleStatusChange={handleStatusChange}
-        difficultyFilter={difficultyFilter}
-        statusFilter={statusFilter}
-        handleDifficultChange={handleDifficultyChange}
-        table={table}
-        data={problems}
-        searchQuery={searchQuery}
-        handleQueryChange={handleQueryChange}
-        clear={() => {
-          setSearchQuery('');
-        }}
-        reset={() => {
-          setSearchQuery('');
-          setStatusFilter('all');
-          setDifficultyFilter('all');
-          table.getColumn('Difficulty')?.setFilterValue('all');
-          table.getColumn('Status')?.setFilterValue('all');
-        }}
-      />
-    </>
+    <ProblemsTable
+      handleStatusChange={handleStatusChange}
+      difficultyFilter={difficultyFilter}
+      statusFilter={statusFilter}
+      handleDifficultChange={handleDifficultyChange}
+      table={table}
+      data={problems}
+      searchQuery={searchQuery}
+      handleQueryChange={handleQueryChange}
+      clear={() => {
+        setSearchQuery('');
+      }}
+      reset={() => {
+        setSearchQuery('');
+        setStatusFilter('all');
+        setDifficultyFilter('all');
+        table.getColumn('Difficulty')?.setFilterValue('all');
+        table.getColumn('Status')?.setFilterValue('all');
+      }}
+    />
   );
 }

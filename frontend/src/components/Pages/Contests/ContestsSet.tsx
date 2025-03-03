@@ -26,7 +26,10 @@ export default function ContestsSet() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const { isError, isLoading, error } = useAuthContext();
-  const contests = useContestSlice((state) => state.contests);
+  const contests = useContestSlice((state) => {
+    // console.log('Contests:', state.contests);
+    return state.contests;
+  });
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const handleClose = () => setOpen(false);
   const columnHelper = createColumnHelper<Contest>();
@@ -36,69 +39,76 @@ export default function ContestsSet() {
 
   const columns = useMemo(
     () => [
-        columnHelper.accessor((row) => {
-            const now = new Date();
-            const start = row.startTime ? new Date(row.startTime) : null;
-            const end = row.endTime ? new Date(row.endTime) : null;
-          
-            if (!start) {
-              return 'Not Set';
+      columnHelper.accessor(
+        (row) => {
+          console.log("ck", row.startTime, row.endTime);
+          const now = new Date(); // Local ICT time
+          const start = row.startTime ? new Date(row.startTime) : null; // UTC parsed correctly
+          const end = row.endTime ? new Date(row.endTime) : null;       // UTC parsed correctly
+
+          // console.log(`Now: ${now}, Start: ${start}, End: ${end}`);
+          // console.log(`Contest: ${row.title}, Now: ${now}, Start: ${start}, End: ${end}`);
+
+          if (!start || isNaN(start.getTime())) {
+            return 'Not Set';
+          }
+          if (now < start) {
+            return 'Not Started';
+          }
+          if (end && !isNaN(end.getTime()) && now >= start && now <= end) {
+            return 'In Progress';
+          }
+          if (end && !isNaN(end.getTime()) && now > end) {
+            return 'Ended';
+          }
+          return 'Ongoing';
+        },
+        {
+          id: 'Status',
+          cell: (info) => {
+            const status = info.getValue() as string;
+            let icon;
+            let color;
+
+            switch (status) {
+              case 'Not Started':
+                icon = <PendingOutlinedIcon />;
+                color = 'warning';
+                break;
+              case 'In Progress':
+                icon = <TaskAltOutlinedIcon />;
+                color = 'success';
+                break;
+              case 'Ended':
+                icon = <TaskAltOutlinedIcon />;
+                color = 'grey.500';
+                break;
+              case 'Ongoing':
+                icon = <TaskAltOutlinedIcon />;
+                color = 'info';
+                break;
+              case 'Not Set':
+              default:
+                icon = null;
+                color = 'grey.500';
+                break;
             }
-            if (now < start) {
-              return 'Not Started';
-            }
-            if (end && now >= start && now <= end) {
-              return 'In Progress';
-            }
-            if (end && now > end) {
-              return 'Ended';
-            }
-            return 'Ongoing';
-          }, {
-            id: 'Status',
-            cell: (info) => {
-              const status = info.getValue();
-              let icon;
-              let color;
-          
-              switch (status) {
-                case 'Not Started':
-                  icon = <PendingOutlinedIcon />;
-                  color = 'warning';
-                  break;
-                case 'In Progress':
-                  icon = <TaskAltOutlinedIcon />;
-                  color = 'success';
-                  break;
-                case 'Ended':
-                  icon = <TaskAltOutlinedIcon />;
-                  color = 'grey.500';
-                  break;
-                case 'Ongoing':
-                  icon = <TaskAltOutlinedIcon />;
-                  color = 'info';
-                  break;
-                case 'Not Set':
-                default:
-                  icon = null;
-                  color = 'grey.500';
-                  break;
-              }
-          
-              return (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {icon && <Box component="span" sx={{ color }}>{icon}</Box>}
-                  <Typography
-                    variant="body2"
-                    sx={{ color, fontWeight: 500, textTransform: 'capitalize' }}
-                  >
-                    {status}
-                  </Typography>
-                </Box>
-              );
-            },
-            filterFn: 'statusFilter' as any,
-          }),
+            return (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {icon && (
+                  <Box component="span" sx={{ color }}>
+                    {icon}
+                  </Box>
+                )}
+                <Typography variant="body2" sx={{ color, fontWeight: 500, textTransform: 'capitalize' }}>
+                  {status}
+                </Typography>
+              </Box>
+            );
+          },
+          filterFn: 'timeStatusFilter' as any,
+        }
+      ),
       columnHelper.accessor((row) => row.title, {
         id: 'Title',
         cell: (info) => (
@@ -208,22 +218,26 @@ export default function ContestsSet() {
         const column = columnId.toLowerCase();
         return row.original[column].toLowerCase().includes(filterValue.toLowerCase());
       },
-      statusFilter: (row, _columnId, filterValue) => {
-        if (!user || !user._id) {
-          return true; // ถ้าไม่มี user ให้แสดงทั้งหมด
-        }
-        const progress = row.original.participantProgress?.find((p: { userId: string }) => p.userId === user._id);
-        const solvedCount = progress?.solvedProblemIds?.length || 0;
-        const totalProblems = row.original.problems.length;
+      timeStatusFilter: (row, _columnId, filterValue) => {
+        if (filterValue === 'all') return true;
 
-        if (filterValue === 'solved') {
-          return solvedCount === totalProblems && totalProblems > 0;
-        } else if (filterValue === 'attempted') {
-          return solvedCount > 0 && solvedCount < totalProblems;
-        } else if (filterValue === 'todo') {
-          return solvedCount === 0;
+        const now = new Date();
+        const start = row.original.startTime ? new Date(row.original.startTime) : null;
+        const end = row.original.endTime ? new Date(row.original.endTime) : null;
+
+        if (!start || isNaN(start.getTime())) {
+          return filterValue === 'Not Set';
         }
-        return true; // 'all'
+        if (now < start) {
+          return filterValue === 'Not Started';
+        }
+        if (end && !isNaN(end.getTime()) && now >= start && now <= end) {
+          return filterValue === 'In Progress';
+        }
+        if (end && !isNaN(end.getTime()) && now > end) {
+          return filterValue === 'Ended';
+        }
+        return filterValue === 'Ongoing';
       },
     },
   });
