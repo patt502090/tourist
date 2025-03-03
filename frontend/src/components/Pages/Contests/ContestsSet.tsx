@@ -1,7 +1,7 @@
-import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useEffect, useMemo, useState } from 'react';
 import { Contest } from '../../../utils/types';
+import GroupIcon from '@mui/icons-material/Group';
 import {
   createColumnHelper,
   useReactTable,
@@ -13,11 +13,12 @@ import {
 import ContestsTable from './ContestsTable';
 import { Link } from 'react-router-dom';
 import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
-import { useUserSlice } from '../../../store/user';
 import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
-import { SelectChangeEvent } from '@mui/material';
+import { SelectChangeEvent, Box, Typography, Chip, Backdrop } from '@mui/material';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useAuthContext } from '../../../context/AuthContext';
 import { useContestSlice } from '../../../store/contestSlice/contest';
+import { useUserSlice } from '../../../store/user';
 import useDebounce from '../../../hooks/useDebounce';
 
 export default function ContestsSet() {
@@ -27,61 +28,168 @@ export default function ContestsSet() {
   const { isError, isLoading, error } = useAuthContext();
   const contests = useContestSlice((state) => state.contests);
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const handleClose = () => setOpen(false);
   const columnHelper = createColumnHelper<Contest>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const user = useUserSlice((state) => state.user);
 
-  // Debug contests เมื่อเปลี่ยนแปลง
-  useEffect(() => {
-    console.log('Contests from store:', contests);
-    console.log('Number of contests:', contests.length);
-    if (contests.length === 0) {
-      console.warn('Warning: Contests store is empty. Check AuthContextWrapper or getContests.');
-    }
-  }, [contests]);
-
   const columns = useMemo(
     () => [
-      columnHelper.accessor((row) => row.status ?? 'N/A', {
-        id: 'Status',
-        cell: (info) => {
-          let icon;
-          if (user && user._id) {
-            const progress = info.row.original.participantProgress?.find(p => p.userId === user._id);
-            icon = progress && progress.solvedProblemIds?.length === info.row.original.problems.length ? (
-              <TaskAltOutlinedIcon titleAccess='Solved' color='success' />
-            ) : progress && progress.solvedProblemIds?.length > 0 ? (
-              <PendingOutlinedIcon titleAccess='Attempted' color='warning' />
-            ) : null;
-          }
-          return <div>{icon}</div>;
-        },
-        filterFn: 'statusFilter' as any,
-      }),
+        columnHelper.accessor((row) => {
+            const now = new Date();
+            const start = row.startTime ? new Date(row.startTime) : null;
+            const end = row.endTime ? new Date(row.endTime) : null;
+          
+            if (!start) {
+              return 'Not Set';
+            }
+            if (now < start) {
+              return 'Not Started';
+            }
+            if (end && now >= start && now <= end) {
+              return 'In Progress';
+            }
+            if (end && now > end) {
+              return 'Ended';
+            }
+            return 'Ongoing';
+          }, {
+            id: 'Status',
+            cell: (info) => {
+              const status = info.getValue();
+              let icon;
+              let color;
+          
+              switch (status) {
+                case 'Not Started':
+                  icon = <PendingOutlinedIcon />;
+                  color = 'warning';
+                  break;
+                case 'In Progress':
+                  icon = <TaskAltOutlinedIcon />;
+                  color = 'success';
+                  break;
+                case 'Ended':
+                  icon = <TaskAltOutlinedIcon />;
+                  color = 'grey.500';
+                  break;
+                case 'Ongoing':
+                  icon = <TaskAltOutlinedIcon />;
+                  color = 'info';
+                  break;
+                case 'Not Set':
+                default:
+                  icon = null;
+                  color = 'grey.500';
+                  break;
+              }
+          
+              return (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {icon && <Box component="span" sx={{ color }}>{icon}</Box>}
+                  <Typography
+                    variant="body2"
+                    sx={{ color, fontWeight: 500, textTransform: 'capitalize' }}
+                  >
+                    {status}
+                  </Typography>
+                </Box>
+              );
+            },
+            filterFn: 'statusFilter' as any,
+          }),
       columnHelper.accessor((row) => row.title, {
         id: 'Title',
         cell: (info) => (
-          <Link to={`/contests/${info.row.original._id}${info.row.index + 1}`}>
+          <Link to={`/contests/${info.row.original._id}`}>
             {info.row.index + 1}. {info.getValue()}
           </Link>
         ),
         filterFn: 'titleFilter' as any,
-}),
+      }),
       columnHelper.accessor((row) => row.startTime ?? 'Not Set', {
         id: 'StartTime',
-        cell: (info) => (info.getValue() === 'Not Set' ? 'Not Set' : new Date(info.getValue()).toLocaleString()),
+        cell: (info) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AccessTimeIcon
+              fontSize="small"
+              sx={{ color: info.getValue() === 'Not Set' ? 'grey.500' : 'primary.main' }}
+            />
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 500,
+                color: info.getValue() === 'Not Set' ? 'grey.500' : 'text.primary',
+                fontFamily: "'Roboto', sans-serif",
+              }}
+            >
+              {info.getValue() === 'Not Set'
+                ? 'Not Set'
+                : new Date(info.getValue()).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                  })}
+            </Typography>
+          </Box>
+        ),
       }),
       columnHelper.accessor((row) => row.endTime ?? 'Not Set', {
         id: 'EndTime',
-        cell: (info) => (info.getValue() === 'Not Set' ? 'Not Set' : new Date(info.getValue()).toLocaleString()),
-}),
+        cell: (info) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AccessTimeIcon
+              fontSize="small"
+              sx={{ color: info.getValue() === 'Not Set' ? 'grey.500' : 'primary.main' }}
+            />
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 500,
+                color: info.getValue() === 'Not Set' ? 'grey.500' : 'text.primary',
+                fontFamily: "'Roboto', sans-serif",
+              }}
+            >
+              {info.getValue() === 'Not Set'
+                ? 'Not Set'
+                : new Date(info.getValue()).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                  })}
+            </Typography>
+          </Box>
+        ),
+      }),
       columnHelper.accessor((row) => row.participants ?? [], {
         id: 'Participants',
-        cell: (info) => `${info.getValue().length} participants`,
+        cell: (info) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <GroupIcon fontSize="small" sx={{ color: 'secondary.main' }} />
+            <Chip
+              label={info.getValue().length}
+              size="small"
+              sx={{
+                backgroundColor: 'secondary.light',
+                color: 'secondary.contrastText',
+                fontWeight: 600,
+                borderRadius: '16px',
+                height: '24px',
+                '& .MuiChip-label': { padding: '0 8px' },
+              }}
+            />
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+              Participants
+            </Typography>
+          </Box>
+        ),
       }),
     ],
     [user]
@@ -119,12 +227,6 @@ export default function ContestsSet() {
       },
     },
   });
-
-  // Debug filtered rows
-  useEffect(() => {
-    const filteredRows = table.getFilteredRowModel().rows.map((row) => row.original);
-    console.log('Filtered contests in table:', filteredRows);
-  }, [table.getFilteredRowModel().rows]);
 
   const handleStatusChange = (event: SelectChangeEvent) => {
     setStatusFilter(event.target.value);
