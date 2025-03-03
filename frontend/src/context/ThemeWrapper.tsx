@@ -15,71 +15,137 @@ export const usethemeUtils = () => {
 const ThemeWrapper: FC<contextWrapperProps> = ({ children }) => {
   const [mode, setMode] = useState<'light' | 'dark'>('light');
 
-  const darkTheme = createTheme({
+  const cuteTheme = createTheme({
     palette: {
-      mode, // light หรือ dark
+      mode,
       primary: {
-        light: '#FF69B4', // Hot Pink สดใสสำหรับโหมด light
-        dark: '#00FFFF',  // Cyan Neon สว่างสำหรับโหมด dark
-        main: mode === 'light' ? '#FF1493' : '#00CED1', // Deep Pink หรือ Dark Cyan
+        light: '#FFD1DC', // Soft Pastel Pink
+        dark: '#B0BEC5',  // Gentle Slate Gray
+        main: mode === 'light' ? '#FF9999' : '#90A4AE', // Light Coral หรือ Cool Blue-Gray
+        contrastText: '#FFFFFF',
       },
       secondary: {
-        light: '#FFFF00', // Yellow สะดุดตา
-        dark: '#FF00FF',  // Magenta Neon
-        main: mode === 'light' ? '#FFD700' : '#FF00FF', // Gold หรือ Magenta
+        light: '#CCFFCC', // Minty Green
+        dark: '#D7CCC8',  // Warm Beige
+        main: mode === 'light' ? '#99CC99' : '#BCAAA4', // Pale Green หรือ Soft Taupe
+        contrastText: '#333333',
       },
       background: {
-        default: mode === 'light' ? '#F0F8FF' : '#1A1A2E', // Alice Blue หรือ Dark Navy
-        paper: mode === 'light' ? '#FFFFFF' : '#16213E',   // ขาวสะอาด หรือน้ำเงินเข้ม
+        default: mode === 'light' ? '#F9FAFB' : '#263238', // Light Gray หรือ Deep Blue-Gray
+        paper: mode === 'light' ? '#FFFFFF' : '#37474F',   // Pure White หรือ Dark Slate
       },
       common: {
         white: '#FFFFFF',
         black: '#000000',
       },
       text: {
-        primary: mode === 'light' ? '#333333' : '#E0E0E0', // เทาเข้ม หรือ เทาอ่อน
-        secondary: mode === 'light' ? '#FF4500' : '#39FF14', // Orange หรือ Neon Green
+        primary: mode === 'light' ? '#4A4A4A' : '#ECEFF1', // Soft Charcoal หรือ Off-White
+        secondary: mode === 'light' ? '#FF6699' : '#80DEEA', // Bubblegum Pink หรือ Sky Cyan
       },
+      error: { main: '#EF5350' },    // Gentle Red
+      warning: { main: '#FFA726' },  // Warm Orange
+      info: { main: '#42A5F5' },     // Calm Blue
+      success: { main: '#66BB6A' },  // Friendly Green
     },
     typography: {
-      fontFamily: "'Orbitron', 'Roboto', sans-serif", // ฟอนต์แนว futuristic
-      button: {
-        textTransform: 'uppercase', // ปุ่มตัวพิมพ์ใหญ่ให้ดูเด่น
-        fontWeight: 700, // หนาๆ
-      },
+      fontFamily: "'Poppins', 'Roboto', sans-serif", // Clean and friendly font
+      fontWeightRegular: 400,
+      fontWeightBold: 600,
       h1: {
-        fontSize: '2.5rem',
-        fontWeight: 900,
-        letterSpacing: '2px', // ห่างๆ ให้ดูเฟี้ยว
+        fontSize: '2.25rem',
+        fontWeight: 600,
+        letterSpacing: '0.5px',
+        color: mode === 'light' ? '#4A4A4A' : '#ECEFF1',
+      },
+      h2: {
+        fontSize: '1.75rem',
+        fontWeight: 500,
+        letterSpacing: '0.3px',
+      },
+      button: {
+        textTransform: 'capitalize', // Soft lowercase vibe
+        fontWeight: 500,
+        fontSize: '0.95rem',
+      },
+      body1: {
+        fontSize: '1rem',
+        fontWeight: 400,
+        lineHeight: 1.6,
       },
     },
     components: {
-      // ปรับแต่งปุ่มให้มี Neon Glow
+      // ปุ่มเรียบง่ายน่ารัก
       MuiButton: {
         styleOverrides: {
           root: {
-            borderRadius: '8px',
-            boxShadow:
-              mode === 'light'
-                ? '0 0 10px rgba(255, 105, 180, 0.5)' // Pink glow
-                : '0 0 10px rgba(0, 255, 255, 0.7)', // Cyan glow
+            borderRadius: '12px',
+            padding: '6px 20px',
+            background: mode === 'light'
+              ? 'linear-gradient(45deg, #FF9999, #FFD1DC)' // Soft Pink Gradient
+              : 'linear-gradient(45deg, #90A4AE, #B0BEC5)', // Cool Gray Gradient
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            color: mode === 'light' ? '#FFFFFF' : '#ECEFF1',
+            transition: 'all 0.3s ease',
             '&:hover': {
-              boxShadow:
-                mode === 'light'
-                  ? '0 0 15px rgba(255, 20, 147, 0.8)'
-                  : '0 0 15px rgba(0, 206, 209, 0.9)',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
+              transform: 'translateY(-2px)', // Gentle lift
+              background: mode === 'light'
+                ? 'linear-gradient(45deg, #FF6699, #FFB3CC)'
+                : 'linear-gradient(45deg, #78909C, #90A4AE)',
+            },
+          },
+          outlined: {
+            border: `1px solid ${mode === 'light' ? '#FF9999' : '#90A4AE'}`,
+            background: 'transparent',
+            color: mode === 'light' ? '#FF9999' : '#90A4AE',
+            '&:hover': {
+              background: mode === 'light' ? 'rgba(255, 153, 153, 0.1)' : 'rgba(144, 164, 174, 0.1)',
             },
           },
         },
       },
-      // ปรับพื้นหลัง Paper ให้มีลูกเล่น
+      // Paper เรียบๆ สบายตา
       MuiPaper: {
         styleOverrides: {
           root: {
-            background:
-              mode === 'dark'
-                ? 'linear-gradient(45deg, #1A1A2E, #16213E)' // Gradient มืด
-                : 'linear-gradient(45deg, #F0F8FF, #FFFFFF)', // Gradient สว่าง
+            background: mode === 'light'
+              ? 'linear-gradient(135deg, #FFFFFF, #F9FAFB)'
+              : 'linear-gradient(135deg, #37474F, #263238)',
+            borderRadius: '16px',
+            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
+            border: mode === 'light' ? '1px solid #EEEEEE' : '1px solid #455A64',
+          },
+        },
+      },
+      // Card สไตล์น่ารัก
+      MuiCard: {
+        styleOverrides: {
+          root: {
+            borderRadius: '20px',
+            background: mode === 'light' ? '#FFFFFF' : '#37474F',
+            boxShadow: '0 3px 10px rgba(0, 0, 0, 0.08)',
+            padding: '16px',
+          },
+        },
+      },
+      // Table เรียบง่ายแต่ดูดี
+      MuiTableCell: {
+        styleOverrides: {
+          root: {
+            borderBottom: mode === 'light'
+              ? '1px solid #EEEEEE'
+              : '1px solid #455A64',
+            padding: '10px',
+          },
+          head: {
+            fontWeight: 600,
+            color: mode === 'light' ? '#4A4A4A' : '#ECEFF1',
+            background: mode === 'light'
+              ? 'rgba(255, 153, 153, 0.05)'
+              : 'rgba(144, 164, 174, 0.05)',
+          },
+          body: {
+            color: mode === 'light' ? '#4A4A4A' : '#ECEFF1',
           },
         },
       },
@@ -98,7 +164,7 @@ const ThemeWrapper: FC<contextWrapperProps> = ({ children }) => {
 
   return (
     <ThemeWrapperContext.Provider value={themeWrapperUtils}>
-      <ThemeProvider theme={darkTheme}>
+      <ThemeProvider theme={cuteTheme}>
         <CssBaseline />
         {children}
       </ThemeProvider>

@@ -1,6 +1,6 @@
 import { protectedapi } from '../API/Index';
 import { getContestType } from '../utils/types';
-const getProblem = async (id: string) => {
+const getContest = async (id: string) => {
   try {
     const response = await protectedapi.get<getContestType>(`/contests/${id}`);
     if (response.data.status === 'Failure') {
@@ -14,4 +14,4 @@ const getProblem = async (id: string) => {
   }
 };
 
-export default getProblem;
+export default getContest;

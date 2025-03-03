@@ -31,8 +31,7 @@ export const AuthContextWrapper: FC<contextWrapperProps> = ({ children }) => {
     queryFn: getProblems,
     refetchOnWindowFocus: false,
   });
-
-  // Fetch contests
+  
   const {
     data: contestsData,
     isLoading: contestsLoading,
@@ -44,6 +43,7 @@ export const AuthContextWrapper: FC<contextWrapperProps> = ({ children }) => {
     refetchOnWindowFocus: false,
   });
 
+
   // เช็ค session
   useEffect(() => {
     if (!['/signin', '/signup'].includes(window.location.pathname)) {
@@ -52,17 +52,19 @@ export const AuthContextWrapper: FC<contextWrapperProps> = ({ children }) => {
   }, []);
 
   // อัปเดตปัญหา (problems) ใน state
+
+  useEffect(() => {
+    if (contestsData?.data) {
+      setContests(contestsData.data);
+      // console.log(contestsData.data)
+    }
+  }, [contestsData]);
+
   useEffect(() => {
     if (problemsData?.data) {
       setProblems(problemsData.data);
     }
   }, [problemsData]);
-
-  useEffect(() => {
-    if (contestsData?.data) {
-      setContests(contestsData.data);
-    }
-  }, [contestsData]);
 
   // จัดการ session login
   useEffect(() => {

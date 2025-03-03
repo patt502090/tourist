@@ -26,20 +26,29 @@ export interface Problem {
   imports: { lang_id: number; code: string }[];
   metadata: metadata;
   languagestoskip: number[];
+  points: number;
 }
 
 
 export interface Contest {
   title: string;
   description: string;
-  status: 'upcoming' | 'ongoing' | 'finished'; 
   _id: string;
-  imports: { lang_id: number; code: string }[];
-  metadata: metadata;
-  participants: user[]; 
-  startTime: Date; 
-  endTime: Date; 
-  problems: Problem[];
+  participants: string[]; // เปลี่ยนจาก user[] เป็น string[] (user IDs)
+  startTime?: string; // เปลี่ยนจาก Date เป็น string และ optional
+  endTime?: string; // เปลี่ยนจาก Date เป็น string และ optional
+  problems: string[]; // เปลี่ยนจาก Problem[] เป็น string[] (problem IDs)
+  participantProgress?: { // เพิ่มจาก JSON
+    userId: string;
+    totalPoints: number;
+    email: string;
+    username: string;
+    solvedProblemIds: string[];
+    _id?: string;
+  }[];
+  status?: 'upcoming' | 'ongoing' | 'finished'; // เปลี่ยนเป็น optional เพราะไม่มีใน JSON
+  imports?: { lang_id: number; code: string }[]; // Optional เพราะไม่มีใน JSON
+  metadata?: metadata; // Optional เพราะไม่มีใน JSON
 }
 export interface commonresponse {
   status: 'Success' | 'Failure';
@@ -121,6 +130,7 @@ export interface user {
   favoriteProgrammingLanguage: number;
   roles: string[];
   submissions: problemsubmission[];
+  distace: number;
 }
 export interface createUser extends Partial<user> {}
 export interface updateuser extends Partial<user> {}

@@ -1,11 +1,12 @@
 import api from '../API/Index';
 import { getContestsType } from '../utils/types';
-const getProblems = async () => {
+const getContests = async () => {
   try {
     const response = await api.get<getContestsType>('/contests');
     if (response.data.status === 'Failure') {
       throw new Error(response.data.error);
     }
+    // console.log(response.data);
     return response.data;
   } catch (error) {
     if (error instanceof Error) {
@@ -14,4 +15,4 @@ const getProblems = async () => {
   }
 };
 
-export default getProblems;
+export default getContests;
