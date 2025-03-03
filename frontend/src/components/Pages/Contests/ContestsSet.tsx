@@ -178,7 +178,7 @@ export default function ContestsSet() {
           </Box>
         ),
       }),
-      columnHelper.accessor((row) => row.participants ?? [], {
+      columnHelper.accessor((row) => row.participantProgress ?? [], {
         id: 'Participants',
         cell: (info) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

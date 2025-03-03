@@ -25,6 +25,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import useDebounce from '../../../hooks/useDebounce';
 import getContest from '../../../services/getContest';
@@ -32,7 +34,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUserSlice } from '../../../store/user';
 import ProblemsTable from '../Problems/ProblemsTable';
 import CoolContestHeader from '../../UI/CoolContestHeader';
-import { protectedapi } from '../../../API/Index'; // Import your API utility
+import { protectedapi } from '../../../API/Index';
 
 interface ProblemData {
   _id: string;
@@ -64,6 +66,8 @@ export default function ProblemsSet() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [timeDisplay, setTimeDisplay] = useState<string>(''); // Unified time display
   const [dialogOpen, setDialogOpen] = useState<boolean>(false); // For confirmation dialog
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false); // For feedback
+  const [snackbarMessage, setSnackbarMessage] = useState<string>(''); // Feedback message
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const handleClose = () => setOpen(false);
   const columnHelper = createColumnHelper<ProblemData>();
@@ -92,11 +96,13 @@ export default function ProblemsSet() {
   const joinContestMutation = useMutation({
     mutationFn: () => protectedapi.put(`/contests/${contestId}/join`, { userId: user?._id }).then((res) => res.data),
     onSuccess: () => {
-      // Refetch contest data after joining
       queryClient.invalidateQueries({ queryKey: ['contest', contestId] });
     },
     onError: (err: any) => {
-      console.error('Failed to join contest:', err.message || err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to join contest';
+      setSnackbarMessage(errorMessage);
+      setSnackbarOpen(true);
+      console.error('Failed to join contest:', errorMessage);
     },
   });
 
@@ -161,16 +167,47 @@ export default function ProblemsSet() {
 
   // Handle join contest with confirmation
   const handleJoinContest = () => {
+    if (!user?._id) {
+      setSnackbarMessage('Please log in to join the contest.');
+      setSnackbarOpen(true);
+      return;
+    }
     setDialogOpen(true);
   };
 
-  const confirmJoinContest = () => {
-    joinContestMutation.mutate();
+  const confirmJoinContest = async () => {
+    console.log('Starting confirmJoinContest');
+    try {
+      console.log('Attempting initial join mutation with userId:', user?._id);
+      await joinContestMutation.mutateAsync(); // Wait for the initial join mutation
+      console.log('Initial join mutation succeeded');
+
+      // Additional PUT request after successful join
+      console.log('Sending additional PUT to /contests/${contestId}/join with userId:', user?._id);
+      await protectedapi.put(`/contests/${contestId}/join`, { userId: user?._id });
+      console.log('Additional PUT request succeeded');
+
+      setSnackbarMessage('Successfully joined and updated contest!');
+      setSnackbarOpen(true);
+      console.log('Success message set, Snackbar opened');
+    } catch (err) {
+      const errorMessage =
+        (err as any).response?.data?.message || (err as any).message || 'Failed to update contest after joining';
+      console.error('Error occurred:', errorMessage, 'Full error:', err);
+      setSnackbarMessage(errorMessage);
+      setSnackbarOpen(true);
+      console.log('Error message set, Snackbar opened with:', errorMessage);
+    }
     setDialogOpen(false);
+    console.log('Dialog closed');
   };
 
   const handleDialogClose = () => {
     setDialogOpen(false);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   const columns = useMemo(
@@ -442,6 +479,22 @@ export default function ProblemsSet() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Feedback Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={joinContestMutation.isError ? 'error' : 'success'}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
