@@ -1,6 +1,13 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsInt,
+  Min,
+} from 'class-validator';
 import { codesnipet, metadata } from 'src/interfaces/config.interface';
-import { testcase } from 'src/Schemas/problem.schema';
+import { testcase } from 'src/schemas/problem.schema'; // แก้ path เป็นตัวพิมพ์เล็กให้สอดคล้องกับ convention
 
 export class CreateProblemDto {
   @IsNotEmpty()
@@ -34,4 +41,9 @@ export class CreateProblemDto {
   @IsOptional()
   @IsString()
   contestId?: string;
+
+  @IsInt({ message: 'Points must be an integer' })
+  @Min(0, { message: 'Points cannot be negative' })
+  @IsNotEmpty({ message: 'Points is required' })
+  points: number;
 }

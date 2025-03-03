@@ -43,6 +43,9 @@ export class Problem {
 
   @Prop({ type: Types.ObjectId, ref: 'Contest' })
   contest?: Contest;
+
+  @Prop({ type: Number, default: 100 })
+  points: number;
 }
 
 export const ProblemSchema = SchemaFactory.createForClass(Problem);

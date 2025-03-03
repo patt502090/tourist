@@ -32,7 +32,7 @@ export class User {
   }[];
 
   @Prop({
-    type: [{ type: Types.ObjectId, ref: () => Contest }], 
+    type: [{ type: Types.ObjectId, ref: () => Contest }],
     default: [],
   })
   contests: Types.ObjectId[];
@@ -42,6 +42,9 @@ export class User {
 
   @Prop({ default: Role.User })
   roles: Role[];
+
+  @Prop({ type: Number, default: 0 })
+  distance: number;
 
   securePassword(passsword: string) {
     return bcrypt.hashSync(passsword, 10);

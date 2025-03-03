@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  NotFoundException,
+} from '@nestjs/common';
 import { ContestsService } from './contests.service';
 import { CreateContestDto } from './dto/create-contest.dto';
 import { UpdateContestDto } from './dto/update-contest.dto';
@@ -33,8 +42,12 @@ export class ContestsController {
   }
 
   @Put(':id/join')
-  async addParticipant(@Param('id') contestId: string, @Body('userId') userId: string) {
-    if (!userId) throw new NotFoundException('userId is required in request body');
+  async addParticipant(
+    @Param('id') contestId: string,
+    @Body('userId') userId: string,
+  ) {
+    if (!userId)
+      throw new NotFoundException('userId is required in request body');
     return this.contestsService.addParticipant(contestId, userId);
   }
 
@@ -48,12 +61,21 @@ export class ContestsController {
     if (!userId || !problemId || !status) {
       throw new NotFoundException('userId, problemId, and status are required');
     }
-    return this.contestsService.updateProblemSolved(contestId, userId, problemId, status);
+    return this.contestsService.updateProblemSolved(
+      contestId,
+      userId,
+      problemId,
+      status,
+    );
   }
 
   @Post(':id/problems')
-  async addProblem(@Param('id') contestId: string, @Body('problemId') problemId: string) {
-    if (!problemId) throw new NotFoundException('problemId is required in request body');
+  async addProblem(
+    @Param('id') contestId: string,
+    @Body('problemId') problemId: string,
+  ) {
+    if (!problemId)
+      throw new NotFoundException('problemId is required in request body');
     return this.contestsService.addProblem(contestId, problemId);
   }
 }

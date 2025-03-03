@@ -87,4 +87,26 @@ export class ProblemsController {
       return getFailureResponse('An unknown error occurred');
     }
   }
+
+  // @Roles(Role.Admin)
+  // @UseGuards(AuthGuard, RolesGaurd, SessionGuard)
+  // @Patch(':id/add-points/:userId')
+  // async addPoints(
+  //   @Param('id') id: ObjectId,
+  //   @Body('points') points: number, // รับค่า points จาก body
+  // ) {
+  //   try {
+  //     if (!points || points <= 0) {
+  //       throw new Error('Points must be a positive number');
+  //     }
+  //     const updatedProblem = await this.problemsService.addPoints(id, points);
+  //     if (!updatedProblem) {
+  //       throw new NotFoundException(`Problem with ID ${id} not found`);
+  //     }
+  //     return updatedProblem;
+  //   } catch (error) {
+  //     if (error instanceof Error) return getFailureResponse(error.message);
+  //     return getFailureResponse('An unknown error occurred');
+  //   }
+  // }
 }

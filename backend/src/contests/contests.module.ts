@@ -2,16 +2,18 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ContestsService } from './contests.service';
 import { ContestsController } from './contests.controller';
-import { Contest, ContestSchema } from 'src/Schemas/contest.schema';
-import { UsersModule } from 'src/users/users.module';
+import { ContestSchema } from 'src/Schemas/contest.schema';
+import { Userschema } from 'src/Schemas/user.schema';
+import { ProblemSchema } from 'src/Schemas/problem.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Contest.name, schema: ContestSchema }]),
-    UsersModule,
+    MongooseModule.forFeature([{ name: 'Contest', schema: ContestSchema }]),
+    MongooseModule.forFeature([{ name: 'User', schema: Userschema }]),
+    MongooseModule.forFeature([{ name: 'Problem', schema: ProblemSchema }]),
   ],
   controllers: [ContestsController],
   providers: [ContestsService],
-  exports: [ContestsService, MongooseModule], 
+  exports: [ContestsService, MongooseModule],
 })
 export class ContestsModule {}
