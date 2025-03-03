@@ -32,7 +32,6 @@ export interface Problem {
 export interface Contest {
   title: string;
   description: string;
-  difficulty: 'easy' | 'medium' | 'hard';
   status: 'upcoming' | 'ongoing' | 'finished'; 
   _id: string;
   imports: { lang_id: number; code: string }[];
@@ -40,12 +39,20 @@ export interface Contest {
   participants: user[]; 
   startTime: Date; 
   endTime: Date; 
+  problems: Problem[];
 }
 export interface commonresponse {
   status: 'Success' | 'Failure';
   error?: string;
   data: any;
 }
+export interface getContestsType extends Omit<commonresponse, 'data'> {
+  data: Contest[];
+}
+export interface getContestType extends Omit<commonresponse, 'data'> {
+  data: Contest;
+}
+
 export interface getProblemsType extends Omit<commonresponse, 'data'> {
   data: Problem[];
 }

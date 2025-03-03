@@ -5,20 +5,66 @@ import { useUserSlice } from '../store/user';
 import { useProblemSlice } from '../store/problemSlice/problem';
 import { useQuery } from '@tanstack/react-query';
 import getProblems from '../services/getProblems';
+import getContests from '../services/getContests'; // สมมติว่ามี service นี้
+import { useContestSlice } from '../store/contestSlice/contest';
 
 export const AuthContext = createContext<authCtx>({ isLoading: false, isError: false, error: null });
 
-export const useAuthContext = () => {
-  const ctx = useContext(AuthContext);
-  return ctx;
-};
+export const useAuthContext = () => useContext(AuthContext);
 
 export const AuthContextWrapper: FC<contextWrapperProps> = ({ children }) => {
   const signIn = useAuthSlice((state) => state.signIn);
   const checkSession = useUserSlice((state) => state.checkSession);
   const sessionLoading = useUserSlice((state) => state.sessionLoading);
   const user = useUserSlice((state) => state.user);
+  const { setProblems } = useProblemSlice();
+  const { setContests } = useContestSlice();
 
+  // Fetch problems
+  const {
+    data: problemsData,
+    isLoading: problemsLoading,
+    isError: problemsError,
+    error: problemsFetchError,
+  } = useQuery({
+    queryKey: ['problems'],
+    queryFn: getProblems,
+    refetchOnWindowFocus: false,
+  });
+
+  // Fetch contests
+  const {
+    data: contestsData,
+    isLoading: contestsLoading,
+    isError: contestsError,
+    error: contestsFetchError,
+  } = useQuery({
+    queryKey: ['contests'],
+    queryFn: getContests,
+    refetchOnWindowFocus: false,
+  });
+
+  // เช็ค session
+  useEffect(() => {
+    if (!['/signin', '/signup'].includes(window.location.pathname)) {
+      checkSession();
+    }
+  }, []);
+
+  // อัปเดตปัญหา (problems) ใน state
+  useEffect(() => {
+    if (problemsData?.data) {
+      setProblems(problemsData.data);
+    }
+  }, [problemsData]);
+
+  useEffect(() => {
+    if (contestsData?.data) {
+      setContests(contestsData.data);
+    }
+  }, [contestsData]);
+
+  // จัดการ session login
   useEffect(() => {
     if (sessionLoading === 'Completed') {
       if (!user) {
@@ -27,23 +73,17 @@ export const AuthContextWrapper: FC<contextWrapperProps> = ({ children }) => {
         signIn();
       }
     }
-  }, [sessionLoading]);
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['problems'],
-    queryFn: getProblems,
-    refetchOnWindowFocus: false,
-  });
-  const { setProblems } = useProblemSlice();
-  useEffect(() => {
-    if (data && data.data) {
-      setProblems(data.data);
-    }
-  }, [data]);
-  useEffect(() => {
-    if (!['/signin', '/signup'].includes(window.location.pathname)) {
-      checkSession();
-    }
-  }, []);
+  }, [sessionLoading, user, signIn]);
 
-  return <AuthContext.Provider value={{ isLoading, isError, error }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        isLoading: problemsLoading || contestsLoading,
+        isError: problemsError || contestsError,
+        error: problemsFetchError || contestsFetchError,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };

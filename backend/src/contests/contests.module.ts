@@ -5,6 +5,7 @@ import { ContestsController } from './contests.controller';
 import { ContestSchema } from 'src/Schemas/contest.schema';
 import { Userschema } from 'src/Schemas/user.schema';
 import { ProblemSchema } from 'src/Schemas/problem.schema';
+import { ContestGateway } from './contest.gateway';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { ProblemSchema } from 'src/Schemas/problem.schema';
     MongooseModule.forFeature([{ name: 'Problem', schema: ProblemSchema }]),
   ],
   controllers: [ContestsController],
-  providers: [ContestsService],
+  providers: [ContestsService, ContestGateway],
   exports: [ContestsService, MongooseModule],
 })
 export class ContestsModule {}
