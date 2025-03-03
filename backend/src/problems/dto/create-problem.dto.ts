@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { codesnipet, metadata } from 'src/interfaces/config.interface';
 import { testcase } from 'src/Schemas/problem.schema';
 
@@ -30,4 +30,8 @@ export class CreateProblemDto {
 
   @IsNotEmpty()
   metadata: metadata;
+
+  @IsOptional()
+  @IsString()
+  contestId?: string;
 }

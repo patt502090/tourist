@@ -5,11 +5,13 @@ import { Problem } from 'src/Schemas/problem.schema';
 import { Model, ObjectId } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { getSuccessResponse } from 'src/utils';
+import { Contest } from 'src/Schemas/contest.schema';
 
 @Injectable()
 export class ProblemsService {
   constructor(
     @InjectModel(Problem.name) private problemModule: Model<Problem>,
+    @InjectModel(Contest.name) private contestModule: Model<Contest>,
   ) {}
   async create(createProblemDto: CreateProblemDto) {
     try {

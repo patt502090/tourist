@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
 import { ContestsService } from './contests.service';
 import { CreateContestDto } from './dto/create-contest.dto';
 import { UpdateContestDto } from './dto/update-contest.dto';
 
-@Controller('contests')
+@Controller('api/contests')
 export class ContestsController {
   constructor(private readonly contestsService: ContestsService) {}
 
@@ -22,7 +22,7 @@ export class ContestsController {
     return this.contestsService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id') id: string, @Body() updateContestDto: UpdateContestDto) {
     return this.contestsService.update(id, updateContestDto);
   }

@@ -12,11 +12,16 @@ import { ProblemsService } from './problems.service';
 import { GetUserByIdMiddleware } from 'src/middlewares/get-user-by-id.middleware';
 import { UsersModule } from 'src/users/users.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { Contest, ContestSchema } from 'src/Schemas/contest.schema';
+import { ContestsModule } from 'src/contests/contests.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Problem.name, schema: ProblemSchema }]),
+    MongooseModule.forFeature([
+      { name: Problem.name, schema: ProblemSchema },
+    ]),
     UsersModule,
+    ContestsModule,
     forwardRef(() => AuthModule),
   ],
   controllers: [ProblemsController],
