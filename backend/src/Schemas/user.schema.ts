@@ -24,6 +24,7 @@ export class User {
   @Prop({ default: [] })
   submissions: {
     problemId: { type: mongoose.Schema.Types.ObjectId; ref: Problem };
+    contestId: { type: mongoose.Schema.Types.ObjectId; ref: () => Contest };
     submissionId: string;
     languageId: number;
     status: string;

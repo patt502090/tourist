@@ -21,10 +21,14 @@ export class Contest extends Document {
   problems: Types.ObjectId[];
 
   @Prop({
-    type: [{ type: Types.ObjectId, ref: () => User }],
+    type: [{
+      userId: { type: Types.ObjectId, ref: () => User },
+      solvedProblems: { type: Number, default: 0 }, // จำนวนโจทย์ที่ทำเสร็จ
+      solvedProblemIds: [{ type: Types.ObjectId, ref: () => Problem }], // โจทย์ที่ทำเสร็จ
+    }],
     default: [],
   })
-  participants: Types.ObjectId[];
+  participantProgress: { userId: Types.ObjectId; solvedProblems: number; solvedProblemIds: Types.ObjectId[] }[]; 
 }
 
 export const ContestSchema = SchemaFactory.createForClass(Contest);
