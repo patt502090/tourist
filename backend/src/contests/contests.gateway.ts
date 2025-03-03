@@ -5,10 +5,7 @@ import { UpdateContestDto } from './dto/update-contest.dto';
 
 @WebSocketGateway(8081, {
   cors: {
-    origin: ['http://localhost:5173', 'https://porametix.online'], // หรือที่อยู่ของ frontend ที่คุณอนุญาต
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
+    origin: "*",
   },
 })
 
