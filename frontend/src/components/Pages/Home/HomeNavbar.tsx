@@ -10,28 +10,30 @@ import DarkModeIcon from '@mui/icons-material/DarkModeOutlined';
 import Profile from '../../UI/Profile';
 import getContests from '../../../services/getContests';
 
+// กำหนด interface สำหรับ Contest
+interface Contest {
+  _id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+}
+
 export default function HomeNavbar() {
   const { colorMode, toggleColorMode } = usethemeUtils();
   const isLogedIn = useAuthSlice((state) => state.isLogedIn);
 
-  // ดึงข้อมูล contests
-  const { data: contests, isLoading } = useQuery({
+  // ดึงข้อมูล contests โดยระบุ type เป็น Contest[]
+  const { data: contests, isLoading } = useQuery<Contest[]>({
     queryKey: ['contests'],
     queryFn: async () => {
       const result = await getContests();
-      return result ?? [];
+      // ถ้า result ไม่ใช่ array หรือ undefined ให้คืนค่า array ว่าง
+      return Array.isArray(result) ? result : [];
     },
     staleTime: 5 * 60 * 1000,
   });
 
   // หา contest ที่กำลังเกิดขึ้นหรือจะเริ่มใน 24 ชม.
-  interface Contest {
-    _id: string;
-    title: string;
-    startTime: string;
-    endTime: string;
-  }
-
   const activeContest: Contest | undefined = contests?.find((contest: Contest) => {
     const now: Date = new Date();
     const startTime: Date = new Date(contest.startTime);

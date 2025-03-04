@@ -40,7 +40,7 @@ export default function ProblemsSet() {
 
   // Filter problems to only include those without a contest
   const problems = useMemo(() => {
-    return allProblems.filter((problem) => !problem.contest || problem.contest === '');
+    return allProblems.filter((problem) => !problem.contestId || problem.contestId === '');
   }, [allProblems]);
 
   const columns = useMemo(
@@ -49,7 +49,7 @@ export default function ProblemsSet() {
         id: 'Status',
         cell: (info) => {
           let icon;
-          if (user) {
+          if (user && info.row.original._id) {
             icon = isAccepted(info.row.original._id, user?.submissions) ? (
               <TaskAltOutlinedIcon titleAccess="Solved" color="success" />
             ) : isRejected(info.row.original._id, user?.submissions) ? (
