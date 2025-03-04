@@ -106,7 +106,17 @@ export default function Problem() {
   const { saveUserCode, getUserCode } = useCodeStorage();
 
   const updateContestProblemMutation = useMutation({
-    mutationFn: ({ contestId, userId, problemId, status }: { contestId: string; userId: string; problemId: string; status: string }) =>
+    mutationFn: ({
+      contestId,
+      userId,
+      problemId,
+      status,
+    }: {
+      contestId: string;
+      userId: string;
+      problemId: string;
+      status: string;
+    }) =>
       protectedapi.post(`/contests/${contestId}/submissions`, { userId, problemId, status }).then((res) => res.data),
     onError: (err: any) => {
       console.error('Failed to update contest problem solved status:', err.response?.data?.message || err.message);

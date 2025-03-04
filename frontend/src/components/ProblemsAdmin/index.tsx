@@ -401,8 +401,8 @@ export default function ProblemsSetAdmin() {
           <TextField
             fullWidth
             label='Title'
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            value={updateformData.title}
+            onChange={(e) => setUpdateFormData({ ...updateformData, title: e.target.value })}
             variant='outlined'
           />
           <TextField
@@ -410,16 +410,18 @@ export default function ProblemsSetAdmin() {
             label='Description'
             multiline
             rows={4}
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            value={updateformData.description}
+            onChange={(e) => setUpdateFormData({ ...updateformData, description: e.target.value })}
             variant='outlined'
           />
           <TextField
             fullWidth
             select
             label='Difficulty'
-            value={formData.difficulty}
-            onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as 'easy' | 'medium' | 'hard' })}
+            value={updateformData.difficulty}
+            onChange={(e) =>
+              setUpdateFormData({ ...updateformData, difficulty: e.target.value as 'easy' | 'medium' | 'hard' })
+            }
             variant='outlined'
             SelectProps={{ native: true }}
           >
@@ -431,24 +433,24 @@ export default function ProblemsSetAdmin() {
             fullWidth
             label='Points'
             type='number'
-            value={formData.points ?? ''} // Handle undefined case
-            onChange={(e) => setFormData({ ...formData, points: Number(e.target.value) })}
+            value={updateformData.points ?? ''} // Handle undefined case
+            onChange={(e) => setUpdateFormData({ ...updateformData, points: Number(e.target.value) })}
             variant='outlined'
           />
 
           {/* Test Cases Editor */}
           <div>
             <h3 className='text-lg font-semibold mb-2'>Test Cases</h3>
-            {(formData.testCases || []).map((testCase, index) => (
+            {(updateformData.testCases || []).map((testCase, index) => (
               <div key={index} className='flex space-x-2 mb-2'>
                 <TextField
                   fullWidth
                   label={`Input ${index + 1}`}
                   value={testCase.input}
                   onChange={(e) => {
-                    const newTestCases = [...formData.testCases];
+                    const newTestCases = [...updateformData.testCases];
                     newTestCases[index].input = e.target.value;
-                    setFormData({ ...formData, testCases: newTestCases });
+                    setUpdateFormData({ ...updateformData, testCases: newTestCases });
                   }}
                   variant='outlined'
                 />
@@ -457,16 +459,16 @@ export default function ProblemsSetAdmin() {
                   label={`Output ${index + 1}`}
                   value={testCase.output}
                   onChange={(e) => {
-                    const newTestCases = [...formData.testCases];
+                    const newTestCases = [...updateformData.testCases];
                     newTestCases[index].output = e.target.value;
-                    setFormData({ ...formData, testCases: newTestCases });
+                    setUpdateFormData({ ...updateformData, testCases: newTestCases });
                   }}
                   variant='outlined'
                 />
                 <IconButton
                   onClick={() => {
-                    const newTestCases = formData.testCases.filter((_, i) => i !== index);
-                    setFormData({ ...formData, testCases: newTestCases });
+                    const newTestCases = updateformData.testCases.filter((_, i) => i !== index);
+                    setUpdateFormData({ ...updateformData, testCases: newTestCases });
                   }}
                   aria-label='delete-test-case'
                 >
@@ -476,7 +478,10 @@ export default function ProblemsSetAdmin() {
             ))}
             <Button
               onClick={() =>
-                setFormData({ ...formData, testCases: [...formData.testCases, { input: '', output: '' }] })
+                setUpdateFormData({
+                  ...updateformData,
+                  testCases: [...updateformData.testCases, { input: '', output: '' }],
+                })
               }
               variant='outlined'
               className='mt-2'
@@ -488,16 +493,16 @@ export default function ProblemsSetAdmin() {
           {/* Starter Code Editor */}
           <div>
             <h3 className='text-lg font-semibold mb-2'>Starter Code</h3>
-            {(formData.starterCode || []).map((item, index) => (
+            {(updateformData.starterCode || []).map((item, index) => (
               <div key={index} className='flex space-x-2 mb-2'>
                 <TextField
                   label={`Language ID ${index + 1}`}
                   type='number'
                   value={item.lang_id}
                   onChange={(e) => {
-                    const newStarterCode = [...formData.starterCode];
+                    const newStarterCode = [...updateformData.starterCode];
                     newStarterCode[index] = { ...newStarterCode[index], lang_id: Number(e.target.value) };
-                    setFormData({ ...formData, starterCode: newStarterCode });
+                    setUpdateFormData({ ...updateformData, starterCode: newStarterCode });
                   }}
                   variant='outlined'
                   className='w-1/4'
@@ -508,16 +513,16 @@ export default function ProblemsSetAdmin() {
                   label={`Code ${index + 1}`}
                   value={item.code}
                   onChange={(e) => {
-                    const newStarterCode = [...formData.starterCode];
+                    const newStarterCode = [...updateformData.starterCode];
                     newStarterCode[index] = { ...newStarterCode[index], code: e.target.value };
-                    setFormData({ ...formData, starterCode: newStarterCode });
+                    setUpdateFormData({ ...updateformData, starterCode: newStarterCode });
                   }}
                   variant='outlined'
                 />
                 <IconButton
                   onClick={() => {
-                    const newStarterCode = formData.starterCode.filter((_, i) => i !== index);
-                    setFormData({ ...formData, starterCode: newStarterCode });
+                    const newStarterCode = updateformData.starterCode.filter((_, i) => i !== index);
+                    setUpdateFormData({ ...updateformData, starterCode: newStarterCode });
                   }}
                   aria-label='delete-starter-code'
                 >
@@ -527,9 +532,9 @@ export default function ProblemsSetAdmin() {
             ))}
             <Button
               onClick={() =>
-                setFormData({
-                  ...formData,
-                  starterCode: [...formData.starterCode, { lang_id: 0, code: '' }],
+                setUpdateFormData({
+                  ...updateformData,
+                  starterCode: [...updateformData.starterCode, { lang_id: 0, code: '' }],
                 })
               }
               variant='outlined'
@@ -542,16 +547,16 @@ export default function ProblemsSetAdmin() {
           {/* System Code Editor */}
           <div>
             <h3 className='text-lg font-semibold mb-2'>System Code</h3>
-            {(formData.systemCode || []).map((item, index) => (
+            {(updateformData.systemCode || []).map((item, index) => (
               <div key={index} className='flex space-x-2 mb-2'>
                 <TextField
                   label={`Language ID ${index + 1}`}
                   type='number'
                   value={item.lang_id}
                   onChange={(e) => {
-                    const newSystemCode = [...formData.systemCode];
+                    const newSystemCode = [...updateformData.systemCode];
                     newSystemCode[index] = { ...newSystemCode[index], lang_id: Number(e.target.value) };
-                    setFormData({ ...formData, systemCode: newSystemCode });
+                    setUpdateFormData({ ...updateformData, systemCode: newSystemCode });
                   }}
                   variant='outlined'
                   className='w-1/4'
@@ -562,16 +567,16 @@ export default function ProblemsSetAdmin() {
                   label={`Code ${index + 1}`}
                   value={item.code}
                   onChange={(e) => {
-                    const newSystemCode = [...formData.systemCode];
+                    const newSystemCode = [...updateformData.systemCode];
                     newSystemCode[index] = { ...newSystemCode[index], code: e.target.value };
-                    setFormData({ ...formData, systemCode: newSystemCode });
+                    setUpdateFormData({ ...updateformData, systemCode: newSystemCode });
                   }}
                   variant='outlined'
                 />
                 <IconButton
                   onClick={() => {
-                    const newSystemCode = formData.systemCode.filter((_, i) => i !== index);
-                    setFormData({ ...formData, systemCode: newSystemCode });
+                    const newSystemCode = updateformData.systemCode.filter((_, i) => i !== index);
+                    setUpdateFormData({ ...updateformData, systemCode: newSystemCode });
                   }}
                   aria-label='delete-system-code'
                 >
@@ -581,9 +586,9 @@ export default function ProblemsSetAdmin() {
             ))}
             <Button
               onClick={() =>
-                setFormData({
-                  ...formData,
-                  systemCode: [...formData.systemCode, { lang_id: 0, code: '' }],
+                setUpdateFormData({
+                  ...updateformData,
+                  systemCode: [...updateformData.systemCode, { lang_id: 0, code: '' }],
                 })
               }
               variant='outlined'
@@ -600,9 +605,12 @@ export default function ProblemsSetAdmin() {
               fullWidth
               label='Time Limit (ms)'
               type='number'
-              value={formData.metadata.timeLimit ?? ''} // Handle undefined
+              value={updateformData.metadata.timeLimit ?? ''} // Handle undefined
               onChange={(e) =>
-                setFormData({ ...formData, metadata: { ...formData.metadata, timeLimit: Number(e.target.value) } })
+                setUpdateFormData({
+                  ...updateformData,
+                  metadata: { ...updateformData.metadata, timeLimit: Number(e.target.value) },
+                })
               }
               variant='outlined'
             />
@@ -610,9 +618,12 @@ export default function ProblemsSetAdmin() {
               fullWidth
               label='Memory Limit (MB)'
               type='number'
-              value={formData.metadata.memoryLimit ?? ''} // Handle undefined
+              value={updateformData.metadata.memoryLimit ?? ''} // Handle undefined
               onChange={(e) =>
-                setFormData({ ...formData, metadata: { ...formData.metadata, memoryLimit: Number(e.target.value) } })
+                setUpdateFormData({
+                  ...updateformData,
+                  metadata: { ...updateformData.metadata, memoryLimit: Number(e.target.value) },
+                })
               }
               variant='outlined'
             />
@@ -621,8 +632,8 @@ export default function ProblemsSetAdmin() {
           <TextField
             fullWidth
             label='Contest ID'
-            value={formData.contestId ?? ''} // Handle null/undefined
-            onChange={(e) => setFormData({ ...formData, contestId: e.target.value || null })}
+            value={updateformData.contestId ?? ''} // Handle null/undefined
+            onChange={(e) => setUpdateFormData({ ...updateformData, contestId: e.target.value || null })}
             variant='outlined'
           />
         </DialogContent>
