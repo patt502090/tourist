@@ -60,18 +60,28 @@ export default function ProblemsSetAdmin() {
     sampleOutput: '',
     testCases: [],
     status: '',
-    _id: '',
     starterCode: [],
     systemCode: [],
-    imports: [],
     metadata: {
-      input_format: '',
-      output_format: '',
-      judge_input_template: '',
-      variables_names: {},
-      variables_types: {},
+      timeLimit: 1000,
+      memoryLimit: 512,
     },
-    languagestoskip: [],
+    contestId: '',
+    points: 0,
+  });
+  const [updateformData, setUpdateFormData] = useState<Problem>({
+    title: '',
+    description: '',
+    difficulty: 'easy',
+    testCases: [],
+    status: '',
+    starterCode: [],
+    systemCode: [],
+    metadata: {
+      timeLimit: 1000,
+      memoryLimit: 512,
+    },
+    contestId: '',
     points: 0,
   });
 
@@ -111,7 +121,7 @@ export default function ProblemsSetAdmin() {
   });
 
   const { mutateAsync: createProblem } = useMutation({
-    mutationFn: ({ userId, data }: { userId: string; data: Problem }) => AdmincreateProblemAPI(userId, data), // ปรับ type ของ data
+    mutationFn: ({ userId, data }: { userId: string; data: Problem }) => AdmincreateProblemAPI(userId, data),
     onSuccess: (newProblem: Problem) => {
       setProblems([...problems, newProblem]);
       queryClient.invalidateQueries({ queryKey: ['get-problems'] });
@@ -127,18 +137,13 @@ export default function ProblemsSetAdmin() {
         sampleOutput: '',
         testCases: [],
         status: '',
-        _id: '',
         starterCode: [],
         systemCode: [],
-        imports: [],
         metadata: {
-          input_format: '',
-          output_format: '',
-          judge_input_template: '',
-          variables_names: {},
-          variables_types: {},
+          timeLimit: 1000,
+          memoryLimit: 512,
         },
-        languagestoskip: [],
+        contestId: '',
         points: 0,
       });
     },
@@ -158,18 +163,13 @@ export default function ProblemsSetAdmin() {
       sampleOutput: '',
       testCases: [],
       status: '',
-      _id: '',
       starterCode: [],
       systemCode: [],
-      imports: [],
       metadata: {
-        input_format: '',
-        output_format: '',
-        judge_input_template: '',
-        variables_names: {},
-        variables_types: {},
+        timeLimit: 1000,
+        memoryLimit: 512,
       },
-      languagestoskip: [],
+      contestId: '',
       points: 0,
     });
     setCreateModalOpen(true);
@@ -211,13 +211,14 @@ export default function ProblemsSetAdmin() {
   };
 
   const handleEditClick = (problem: Problem) => {
+    console.log(problem);
     setSelectedProblem(problem);
     setFormData(problem);
     setEditModalOpen(true);
   };
 
   const handleEditSubmit = async () => {
-    if (!user || !selectedProblem) {
+    if (!user || !selectedProblem || !selectedProblem._id) {
       return;
     }
 
@@ -225,7 +226,7 @@ export default function ProblemsSetAdmin() {
       await AdminupdateProblem({
         problemId: selectedProblem._id,
         userId: user._id,
-        data: formData,
+        data: updateformData,
       });
     } catch (error) {
       console.error('Failed to update problem:', error);
@@ -265,10 +266,13 @@ export default function ProblemsSetAdmin() {
         id: 'Actions',
         cell: (info) => (
           <>
-            <IconButton onClick={() => handleEditClick(info.row.original)} aria-label='edit'>
+            <IconButton onClick={() => info.row.original._id && handleEditClick(info.row.original)} aria-label='edit'>
               <EditIcon />
             </IconButton>
-            <IconButton onClick={() => handleDelete(info.row.original._id)} aria-label='delete'>
+            <IconButton
+              onClick={() => info.row.original._id && handleDelete(info.row.original._id)}
+              aria-label='delete'
+            >
               <DeleteIcon />
             </IconButton>
           </>
@@ -427,24 +431,8 @@ export default function ProblemsSetAdmin() {
             fullWidth
             label='Points'
             type='number'
-            value={formData.points}
+            value={formData.points ?? ''} // Handle undefined case
             onChange={(e) => setFormData({ ...formData, points: Number(e.target.value) })}
-            variant='outlined'
-          />
-          <TextField
-            fullWidth
-            label='Sample Input'
-            multiline
-            value={formData.sampleInput}
-            onChange={(e) => setFormData({ ...formData, sampleInput: e.target.value })}
-            variant='outlined'
-          />
-          <TextField
-            fullWidth
-            label='Sample Output'
-            multiline
-            value={formData.sampleOutput}
-            onChange={(e) => setFormData({ ...formData, sampleOutput: e.target.value })}
             variant='outlined'
           />
 
@@ -488,7 +476,7 @@ export default function ProblemsSetAdmin() {
             ))}
             <Button
               onClick={() =>
-                setFormData({ ...formData, testCases: [...(formData.testCases || []), { input: '', output: '' }] })
+                setFormData({ ...formData, testCases: [...formData.testCases, { input: '', output: '' }] })
               }
               variant='outlined'
               className='mt-2'
@@ -541,7 +529,7 @@ export default function ProblemsSetAdmin() {
               onClick={() =>
                 setFormData({
                   ...formData,
-                  starterCode: [...(formData.starterCode || []), { lang_id: 0, code: '' }],
+                  starterCode: [...formData.starterCode, { lang_id: 0, code: '' }],
                 })
               }
               variant='outlined'
@@ -595,7 +583,7 @@ export default function ProblemsSetAdmin() {
               onClick={() =>
                 setFormData({
                   ...formData,
-                  systemCode: [...(formData.systemCode || []), { lang_id: 0, code: '' }],
+                  systemCode: [...formData.systemCode, { lang_id: 0, code: '' }],
                 })
               }
               variant='outlined'
@@ -605,11 +593,36 @@ export default function ProblemsSetAdmin() {
             </Button>
           </div>
 
+          {/* Metadata Editor */}
+          <div>
+            <h3 className='text-lg font-semibold mb-2'>Metadata</h3>
+            <TextField
+              fullWidth
+              label='Time Limit (ms)'
+              type='number'
+              value={formData.metadata.timeLimit ?? ''} // Handle undefined
+              onChange={(e) =>
+                setFormData({ ...formData, metadata: { ...formData.metadata, timeLimit: Number(e.target.value) } })
+              }
+              variant='outlined'
+            />
+            <TextField
+              fullWidth
+              label='Memory Limit (MB)'
+              type='number'
+              value={formData.metadata.memoryLimit ?? ''} // Handle undefined
+              onChange={(e) =>
+                setFormData({ ...formData, metadata: { ...formData.metadata, memoryLimit: Number(e.target.value) } })
+              }
+              variant='outlined'
+            />
+          </div>
+
           <TextField
             fullWidth
             label='Contest ID'
-            value={formData.contest || ''}
-            onChange={(e) => setFormData({ ...formData, contest: e.target.value })}
+            value={formData.contestId ?? ''} // Handle null/undefined
+            onChange={(e) => setFormData({ ...formData, contestId: e.target.value || null })}
             variant='outlined'
           />
         </DialogContent>
@@ -622,6 +635,7 @@ export default function ProblemsSetAdmin() {
           </Button>
         </DialogActions>
       </Dialog>
+
       {/* Create Modal */}
       <Dialog open={createModalOpen} onClose={() => setCreateModalOpen(false)} maxWidth='md' fullWidth>
         <DialogTitle>Create New Problem</DialogTitle>
@@ -659,7 +673,7 @@ export default function ProblemsSetAdmin() {
             fullWidth
             label='Points'
             type='number'
-            value={formData.points || ''}
+            value={formData.points ?? ''} // Handle undefined
             onChange={(e) => setFormData({ ...formData, points: Number(e.target.value) })}
             variant='outlined'
           />
@@ -689,8 +703,8 @@ export default function ProblemsSetAdmin() {
           <TextField
             fullWidth
             label='Contest ID'
-            value={formData.contest || ''}
-            onChange={(e) => setFormData({ ...formData, contest: e.target.value })}
+            value={formData.contestId ?? ''} // Handle null/undefined
+            onChange={(e) => setFormData({ ...formData, contestId: e.target.value || null })}
             variant='outlined'
           />
 
@@ -734,7 +748,7 @@ export default function ProblemsSetAdmin() {
             ))}
             <Button
               onClick={() =>
-                setFormData({ ...formData, testCases: [...(formData.testCases || []), { input: '', output: '' }] })
+                setFormData({ ...formData, testCases: [...formData.testCases, { input: '', output: '' }] })
               }
               variant='outlined'
               className='mt-2'
@@ -787,7 +801,7 @@ export default function ProblemsSetAdmin() {
               onClick={() =>
                 setFormData({
                   ...formData,
-                  starterCode: [...(formData.starterCode || []), { lang_id: 0, code: '' }],
+                  starterCode: [...formData.starterCode, { lang_id: 0, code: '' }],
                 })
               }
               variant='outlined'
@@ -841,7 +855,7 @@ export default function ProblemsSetAdmin() {
               onClick={() =>
                 setFormData({
                   ...formData,
-                  systemCode: [...(formData.systemCode || []), { lang_id: 0, code: '' }],
+                  systemCode: [...formData.systemCode, { lang_id: 0, code: '' }],
                 })
               }
               variant='outlined'
@@ -851,164 +865,29 @@ export default function ProblemsSetAdmin() {
             </Button>
           </div>
 
-          {/* Imports Editor */}
-          <div>
-            <h3 className='text-lg font-semibold mb-2'>Imports</h3>
-            {(formData.imports || []).map((item, index) => (
-              <div key={index} className='flex space-x-2 mb-2'>
-                <TextField
-                  label={`Language ID ${index + 1}`}
-                  type='number'
-                  value={item.lang_id}
-                  onChange={(e) => {
-                    const newImports = [...formData.imports];
-                    newImports[index] = { ...newImports[index], lang_id: Number(e.target.value) };
-                    setFormData({ ...formData, imports: newImports });
-                  }}
-                  variant='outlined'
-                  className='w-1/4'
-                />
-                <TextField
-                  fullWidth
-                  multiline
-                  label={`Import Code ${index + 1}`}
-                  value={item.code}
-                  onChange={(e) => {
-                    const newImports = [...formData.imports];
-                    newImports[index] = { ...newImports[index], code: e.target.value };
-                    setFormData({ ...formData, imports: newImports });
-                  }}
-                  variant='outlined'
-                />
-                <IconButton
-                  onClick={() => {
-                    const newImports = formData.imports.filter((_, i) => i !== index);
-                    setFormData({ ...formData, imports: newImports });
-                  }}
-                  aria-label='delete-import'
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </div>
-            ))}
-            <Button
-              onClick={() =>
-                setFormData({
-                  ...formData,
-                  imports: [...(formData.imports || []), { lang_id: 0, code: '' }],
-                })
-              }
-              variant='outlined'
-              className='mt-2'
-            >
-              Add Import
-            </Button>
-          </div>
-
           {/* Metadata Editor */}
           <div>
             <h3 className='text-lg font-semibold mb-2'>Metadata</h3>
             <TextField
               fullWidth
-              label='Input Format'
-              value={formData.metadata.input_format}
+              label='Time Limit (ms)'
+              type='number'
+              value={formData.metadata.timeLimit ?? ''}
               onChange={(e) =>
-                setFormData({ ...formData, metadata: { ...formData.metadata, input_format: e.target.value } })
+                setFormData({ ...formData, metadata: { ...formData.metadata, timeLimit: Number(e.target.value) } })
               }
               variant='outlined'
             />
             <TextField
               fullWidth
-              label='Output Format'
-              value={formData.metadata.output_format}
+              label='Memory Limit (MB)'
+              type='number'
+              value={formData.metadata.memoryLimit ?? ''}
               onChange={(e) =>
-                setFormData({ ...formData, metadata: { ...formData.metadata, output_format: e.target.value } })
+                setFormData({ ...formData, metadata: { ...formData.metadata, memoryLimit: Number(e.target.value) } })
               }
               variant='outlined'
             />
-            <TextField
-              fullWidth
-              label='Judge Input Template'
-              value={formData.metadata.judge_input_template}
-              onChange={(e) =>
-                setFormData({ ...formData, metadata: { ...formData.metadata, judge_input_template: e.target.value } })
-              }
-              variant='outlined'
-            />
-            {/* Variables Names (Record<string, string>) */}
-            <TextField
-              fullWidth
-              label='Variables Names (JSON)'
-              multiline
-              value={JSON.stringify(formData.metadata.variables_names, null, 2)}
-              onChange={(e) => {
-                try {
-                  const parsed = JSON.parse(e.target.value);
-                  setFormData({ ...formData, metadata: { ...formData.metadata, variables_names: parsed } });
-                } catch {
-                  // Ignore invalid JSON
-                }
-              }}
-              variant='outlined'
-            />
-            {/* Variables Types (Record<string, string>) */}
-            <TextField
-              fullWidth
-              label='Variables Types (JSON)'
-              multiline
-              value={JSON.stringify(formData.metadata.variables_types, null, 2)}
-              onChange={(e) => {
-                try {
-                  const parsed = JSON.parse(e.target.value);
-                  setFormData({ ...formData, metadata: { ...formData.metadata, variables_types: parsed } });
-                } catch {
-                  // Ignore invalid JSON
-                }
-              }}
-              variant='outlined'
-            />
-          </div>
-
-          {/* Languages to Skip Editor */}
-          <div>
-            <h3 className='text-lg font-semibold mb-2'>Languages to Skip</h3>
-            {(formData.languagestoskip || []).map((langId, index) => (
-              <div key={index} className='flex space-x-2 mb-2'>
-                <TextField
-                  fullWidth
-                  label={`Language ID ${index + 1}`}
-                  type='number'
-                  value={langId}
-                  onChange={(e) => {
-                    const newLanguagesToSkip = [...formData.languagestoskip];
-                    newLanguagesToSkip[index] = Number(e.target.value);
-                    setFormData({ ...formData, languagestoskip: newLanguagesToSkip });
-                  }}
-                  variant='outlined'
-                />
-                <IconButton
-                  onClick={() => {
-                    const newLanguagesToSkip = formData.languagestoskip.filter((_, i) => i !== index);
-                    setFormData({ ...formData, languagestoskip: newLanguagesToSkip });
-                  }}
-                  aria-label='delete-language-skip'
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </div>
-            ))}
-            <Button
-              onClick={() =>
-                setFormData({
-                  ...formData,
-                  languagestoskip: [...(formData.languagestoskip || []), 0],
-                })
-              }
-              variant='outlined'
-              className='mt-2'
-            >
-              Add Language to Skip
-            </Button>
           </div>
         </DialogContent>
         <DialogActions>
