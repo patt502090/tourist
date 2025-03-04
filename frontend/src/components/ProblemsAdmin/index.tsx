@@ -27,7 +27,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { useAuthContext } from '../../context/AuthContext';
 import { useProblemSlice } from '../../store/problemSlice/problem';
 import useDebounce from '../../hooks/useDebounce';
-import { getProblemType, Problem } from '../../utils/types';
+import { Problem } from '../../utils/types';
 import { useUserSlice } from '../../store/user';
 import { difficultyColors } from '../../constants/Index';
 import ProblemsTable from '../Pages/Problems/ProblemsTable';
@@ -608,8 +608,8 @@ export default function ProblemsSetAdmin() {
           <TextField
             fullWidth
             label='Contest ID'
-            value={formData.contestId || ''}
-            onChange={(e) => setFormData({ ...formData, contestId: e.target.value })}
+            value={formData.contest || ''}
+            onChange={(e) => setFormData({ ...formData, contest: e.target.value })}
             variant='outlined'
           />
         </DialogContent>
@@ -689,8 +689,8 @@ export default function ProblemsSetAdmin() {
           <TextField
             fullWidth
             label='Contest ID'
-            value={formData.contestId || ''}
-            onChange={(e) => setFormData({ ...formData, contestId: e.target.value })}
+            value={formData.contest || ''}
+            onChange={(e) => setFormData({ ...formData, contest: e.target.value })}
             variant='outlined'
           />
 
