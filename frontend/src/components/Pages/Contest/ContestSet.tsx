@@ -68,6 +68,7 @@ export default function ProblemsSet() {
   const [dialogOpen, setDialogOpen] = useState<boolean>(false); // For confirmation dialog
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false); // For feedback
   const [snackbarMessage, setSnackbarMessage] = useState<string>(''); // Feedback message
+  const [showJoinMessage, setShowJoinMessage] = useState<boolean>(false); // To show join message
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const handleClose = () => setOpen(false);
   const columnHelper = createColumnHelper<ProblemData>();
@@ -83,6 +84,7 @@ export default function ProblemsSet() {
     isLoading,
     isError,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['contest', contestId],
     queryFn: () => {
@@ -97,9 +99,10 @@ export default function ProblemsSet() {
     mutationFn: () => protectedapi.put(`/contests/${contestId}/join`, { userId: user?._id }).then((res) => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contest', contestId] });
+      refetch(); // Ensure contest data is refetched immediately
     },
     onError: (err: any) => {
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to join contest';
+      const errorMessage = (err as any).response?.data?.message || (err as any).message || 'Failed to join contest';
       setSnackbarMessage(errorMessage);
       setSnackbarOpen(true);
       console.error('Failed to join contest:', errorMessage);
@@ -119,7 +122,7 @@ export default function ProblemsSet() {
 
   // Check if user has joined the contest
   const hasJoined = useMemo(() => {
-    return contestData?.participants?.includes(user?._id || '');
+    return contestData?.participantProgress?.some((participant) => participant.userId === user?._id);
   }, [contestData, user]);
 
   // Countdown logic
@@ -128,12 +131,11 @@ export default function ProblemsSet() {
 
     const startTime = new Date(contestData.startTime).getTime();
     const endTime = contestData.endTime ? new Date(contestData.endTime).getTime() : null;
-    const now = new Date().getTime();
 
     const updateTimer = () => {
       const currentTime = new Date().getTime();
 
-      if (!hasJoined && currentTime < startTime) {
+      if (currentTime < startTime) {
         const distanceToStart = startTime - currentTime;
         if (distanceToStart <= 0) {
           setTimeDisplay('Contest Started');
@@ -163,7 +165,7 @@ export default function ProblemsSet() {
     updateTimer();
     const timer = setInterval(updateTimer, 1000);
     return () => clearInterval(timer);
-  }, [contestData?.startTime, contestData?.endTime, hasJoined]);
+  }, [contestData?.startTime, contestData?.endTime]);
 
   // Handle join contest with confirmation
   const handleJoinContest = () => {
@@ -176,30 +178,26 @@ export default function ProblemsSet() {
   };
 
   const confirmJoinContest = async () => {
-    console.log('Starting confirmJoinContest');
     try {
-      console.log('Attempting initial join mutation with userId:', user?._id);
-      await joinContestMutation.mutateAsync(); // Wait for the initial join mutation
-      console.log('Initial join mutation succeeded');
-
-      // Additional PUT request after successful join
-      console.log('Sending additional PUT to /contests/${contestId}/join with userId:', user?._id);
-      await protectedapi.put(`/contests/${contestId}/join`, { userId: user?._id });
-      console.log('Additional PUT request succeeded');
-
-      setSnackbarMessage('Successfully joined and updated contest!');
+      await joinContestMutation.mutateAsync(); // Wait for the join mutation
+      setSnackbarMessage('Successfully joined the contest!');
       setSnackbarOpen(true);
-      console.log('Success message set, Snackbar opened');
+
+      const currentTime = new Date().getTime();
+      const startTime = contestData?.startTime ? new Date(contestData.startTime).getTime() : Infinity;
+
+      if (currentTime < startTime) {
+        setShowJoinMessage(true); // Show join message if contest hasn't started
+      } else {
+        setShowJoinMessage(false); // Hide join message and show table if contest has started
+      }
     } catch (err) {
-      const errorMessage =
-        (err as any).response?.data?.message || (err as any).message || 'Failed to update contest after joining';
-      console.error('Error occurred:', errorMessage, 'Full error:', err);
+      const errorMessage = (err as any).response?.data?.message || (err as any).message || 'Failed to join contest';
       setSnackbarMessage(errorMessage);
       setSnackbarOpen(true);
-      console.log('Error message set, Snackbar opened with:', errorMessage);
+      console.error('Join failed:', errorMessage);
     }
     setDialogOpen(false);
-    console.log('Dialog closed');
   };
 
   const handleDialogClose = () => {
@@ -333,16 +331,7 @@ export default function ProblemsSet() {
 
       {/* Join Button or Scoreboard */}
       <Box sx={{ margin: '20px 0' }}>
-        {!hasJoined && contestData && new Date() < new Date(contestData.startTime) ? (
-          <Button
-            variant='contained'
-            color='primary'
-            onClick={handleJoinContest}
-            sx={{ padding: '10px 20px', fontSize: '16px' }}
-          >
-            Join Contest
-          </Button>
-        ) : (
+        {hasJoined ? (
           <Button
             variant='contained'
             color='primary'
@@ -352,8 +341,24 @@ export default function ProblemsSet() {
           >
             View Scoreboard
           </Button>
+        ) : (
+          <Button
+            variant='contained'
+            color='primary'
+            onClick={handleJoinContest}
+            sx={{ padding: '10px 20px', fontSize: '16px' }}
+          >
+            Join Contest
+          </Button>
         )}
       </Box>
+
+      {/* Show join message if contest hasn't started after joining */}
+      {showJoinMessage && hasJoined && contestData && new Date() < new Date(contestData.startTime) && (
+        <Typography variant='h6' sx={{ margin: '20px 0', color: 'text.secondary' }}>
+          {timeDisplay}
+        </Typography>
+      )}
 
       {/* Problems Table */}
       {showTable && (
@@ -391,8 +396,8 @@ export default function ProblemsSet() {
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
             background: (theme) =>
               theme.palette.mode === 'dark'
-                ? 'linear-gradient(135deg, #1A1F2E 30%, #0A0E17 90%)' // Cyberpunk gradient
-                : 'linear-gradient(135deg, #FFFFFF 30%, #F6F8FA 90%)', // Cute gradient
+                ? 'linear-gradient(135deg, #1A1F2E 30%, #0A0E17 90%)'
+                : 'linear-gradient(135deg, #FFFFFF 30%, #F6F8FA 90%)',
             border: (theme) => (theme.palette.mode === 'dark' ? '1px solid #FF69B4' : '1px solid #E8ECEF'),
             width: '400px',
           },
@@ -403,7 +408,7 @@ export default function ProblemsSet() {
           sx={{
             fontWeight: 700,
             fontSize: '1.5rem',
-            color: (theme) => (theme.palette.mode === 'dark' ? '#FF69B4' : '#424242'), // Pink for cyberpunk, gray for cute
+            color: (theme) => (theme.palette.mode === 'dark' ? '#FF69B4' : '#424242'),
             textAlign: 'center',
             borderBottom: (theme) =>
               theme.palette.mode === 'dark' ? '1px solid rgba(255, 105, 180, 0.3)' : '1px solid #E8ECEF',
@@ -448,7 +453,7 @@ export default function ProblemsSet() {
               fontWeight: 600,
               borderRadius: '8px',
               textTransform: 'capitalize',
-              color: (theme) => (theme.palette.mode === 'dark' ? '#00E5FF' : '#FF9999'), // Cyan for cyberpunk, pink for cute
+              color: (theme) => (theme.palette.mode === 'dark' ? '#00E5FF' : '#FF9999'),
               '&:hover': {
                 backgroundColor: (theme) =>
                   theme.palette.mode === 'dark' ? 'rgba(0, 229, 255, 0.1)' : 'rgba(255, 153, 153, 0.1)',
@@ -467,7 +472,7 @@ export default function ProblemsSet() {
               fontWeight: 600,
               borderRadius: '8px',
               textTransform: 'capitalize',
-              backgroundColor: (theme) => (theme.palette.mode === 'dark' ? '#FF1493' : '#FF8A8A'), // Neon pink for cyberpunk, coral for cute
+              backgroundColor: (theme) => (theme.palette.mode === 'dark' ? '#FF1493' : '#FF8A8A'),
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
               '&:hover': {
                 backgroundColor: (theme) => (theme.palette.mode === 'dark' ? '#FF4081' : '#FF6699'),

@@ -41,10 +41,10 @@ export default function ContestsSet() {
     () => [
       columnHelper.accessor(
         (row) => {
-          console.log("ck", row.startTime, row.endTime);
+          console.log('ck', row.startTime, row.endTime);
           const now = new Date(); // Local ICT time
           const start = row.startTime ? new Date(row.startTime) : null; // UTC parsed correctly
-          const end = row.endTime ? new Date(row.endTime) : null;       // UTC parsed correctly
+          const end = row.endTime ? new Date(row.endTime) : null; // UTC parsed correctly
 
           // console.log(`Now: ${now}, Start: ${start}, End: ${end}`);
           // console.log(`Contest: ${row.title}, Now: ${now}, Start: ${start}, End: ${end}`);
@@ -96,11 +96,11 @@ export default function ContestsSet() {
             return (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 {icon && (
-                  <Box component="span" sx={{ color }}>
+                  <Box component='span' sx={{ color }}>
                     {icon}
                   </Box>
                 )}
-                <Typography variant="body2" sx={{ color, fontWeight: 500, textTransform: 'capitalize' }}>
+                <Typography variant='body2' sx={{ color, fontWeight: 500, textTransform: 'capitalize' }}>
                   {status}
                 </Typography>
               </Box>
@@ -123,11 +123,11 @@ export default function ContestsSet() {
         cell: (info) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <AccessTimeIcon
-              fontSize="small"
+              fontSize='small'
               sx={{ color: info.getValue() === 'Not Set' ? 'grey.500' : 'primary.main' }}
             />
             <Typography
-              variant="body2"
+              variant='body2'
               sx={{
                 fontWeight: 500,
                 color: info.getValue() === 'Not Set' ? 'grey.500' : 'text.primary',
@@ -153,11 +153,11 @@ export default function ContestsSet() {
         cell: (info) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <AccessTimeIcon
-              fontSize="small"
+              fontSize='small'
               sx={{ color: info.getValue() === 'Not Set' ? 'grey.500' : 'primary.main' }}
             />
             <Typography
-              variant="body2"
+              variant='body2'
               sx={{
                 fontWeight: 500,
                 color: info.getValue() === 'Not Set' ? 'grey.500' : 'text.primary',
@@ -182,10 +182,10 @@ export default function ContestsSet() {
         id: 'Participants',
         cell: (info) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <GroupIcon fontSize="small" sx={{ color: 'secondary.main' }} />
+            <GroupIcon fontSize='small' sx={{ color: 'secondary.main' }} />
             <Chip
               label={info.getValue().length}
-              size="small"
+              size='small'
               sx={{
                 backgroundColor: 'secondary.light',
                 color: 'secondary.contrastText',
@@ -195,7 +195,7 @@ export default function ContestsSet() {
                 '& .MuiChip-label': { padding: '0 8px' },
               }}
             />
-            <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+            <Typography variant='body2' sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
               Participants
             </Typography>
           </Box>
@@ -258,7 +258,7 @@ export default function ContestsSet() {
   if (isLoading) {
     return (
       <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
-        <CircularProgress color="inherit" />
+        <CircularProgress color='inherit' />
       </Backdrop>
     );
   }
@@ -268,21 +268,52 @@ export default function ContestsSet() {
   }
 
   return (
-    <ContestsTable
-      handleStatusChange={handleStatusChange}
-      handleDifficultChange={() => {}}
-      difficultyFilter="all"
-      statusFilter={statusFilter}
-      table={table}
-      data={contests}
-      searchQuery={searchQuery}
-      handleQueryChange={handleQueryChange}
-      clear={() => setSearchQuery('')}
-      reset={() => {
-        setSearchQuery('');
-        setStatusFilter('all');
-        table.getColumn('Status')?.setFilterValue('all');
-      }}
-    />
+    <Box sx={{ padding: '20px' }}>
+      {/* Header */}
+      <Typography
+        variant='h4'
+        sx={{
+          fontWeight: 700,
+          color: 'text.primary',
+          marginBottom: '20px',
+          textAlign: 'center',
+          fontFamily: "'Roboto Slab', 'Poppins', serif", // Refined font stack
+          letterSpacing: '0.5px', // Subtle spacing for elegance
+          textShadow: (theme) =>
+            theme.palette.mode === 'dark'
+              ? '0 2px 4px rgba(255, 105, 180, 0.3)' // Cyberpunk neon glow
+              : '0 2px 4px rgba(0, 0, 0, 0.1)', // Cute soft shadow
+          lineHeight: 1.2, // Tighter line height for neatness
+          padding: '8px 16px', // Slight padding for a framed effect
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(255, 20, 147, 0.1), rgba(0, 229, 255, 0.1))' // Cyberpunk gradient
+              : 'linear-gradient(135deg, rgba(255, 138, 138, 0.05), rgba(255, 255, 255, 0.05))', // Cute subtle gradient
+          borderRadius: '8px', // Rounded edges
+          border: (theme) =>
+            theme.palette.mode === 'dark' ? '1px solid rgba(255, 105, 180, 0.3)' : '1px solid rgba(0, 0, 0, 0.05)',
+        }}
+      >
+        List of Competitions
+      </Typography>
+
+      {/* Contests Table */}
+      <ContestsTable
+        handleStatusChange={handleStatusChange}
+        handleDifficultChange={() => {}}
+        difficultyFilter='all'
+        statusFilter={statusFilter}
+        table={table}
+        data={contests}
+        searchQuery={searchQuery}
+        handleQueryChange={handleQueryChange}
+        clear={() => setSearchQuery('')}
+        reset={() => {
+          setSearchQuery('');
+          setStatusFilter('all');
+          table.getColumn('Status')?.setFilterValue('all');
+        }}
+      />
+    </Box>
   );
 }
