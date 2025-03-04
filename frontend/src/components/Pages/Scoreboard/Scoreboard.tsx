@@ -61,36 +61,36 @@ export default function Scoreboard() {
   } = useQuery({
     queryKey: ['contest', contestId],
     queryFn: () => {
-      if (!contestId) throw new Error('Contest ID is missing');
+      if (!contestId) {
+        throw new Error('Contest ID is missing');
+      }
       return getContest(contestId);
     },
     enabled: Boolean(contestId),
   });
 
+  // console.log(contestData)
+
   const columnHelper = createColumnHelper<ScoreboardEntry>();
 
   const scoreboardData = useMemo(() => {
-    if (!contestData?.participantProgress || !contestData?.participants) return [];
-
+    if (!contestData?.participantProgress) {
+      return [];
+    }
+  
     const scoreboard: ScoreboardEntry[] = contestData.participantProgress
       .map((progress: ParticipantProgress, index: number) => {
-        // หา participant จาก participantProgress
-        const participant = contestData.participantProgress?.find(
-          (p: ParticipantProgress) => p.userId === progress.userId
-        ) || { username: 'Anonymous' };
-
         return {
           rank: index + 1,
-          // ตรวจสอบว่า participant มี username หรือไม่
-          username: 'username' in participant ? participant.username || 'Anonymous' : 'Anonymous',
+          username: progress.username || 'Anonymous',
           totalPoints: progress.totalPoints || 0,
-          solvedProblems: progress.solvedProblems || progress.solvedProblemIds?.length || 0,
+          solvedProblems: progress.solvedProblemIds?.length || 0,
           userId: progress.userId,
         };
       })
-      .sort((a, b) => b.totalPoints - a.totalPoints) // เรียงตามคะแนน
-      .map((entry, index) => ({ ...entry, rank: index + 1 })); // อัปเดต rank
-
+      .sort((a, b) => b.totalPoints - a.totalPoints)
+      .map((entry, index) => ({ ...entry, rank: index + 1 }));
+  
     return scoreboard;
   }, [contestData]);
 
@@ -114,7 +114,6 @@ export default function Scoreboard() {
 
   const handleClose = () => setOpen(false);
 
-  if (!contestId) return <p>No contest ID provided in the URL.</p>;
 
   if (isLoading) {
     return (
@@ -124,7 +123,9 @@ export default function Scoreboard() {
     );
   }
 
-  if (isError) return <p>{error?.message || 'An error occurred while fetching contest data'}</p>;
+  if (isError){
+    return <p>{error?.message || 'An error occurred while fetching contest data'}</p>;
+  }
 
   return (
     <Box

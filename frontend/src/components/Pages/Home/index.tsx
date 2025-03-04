@@ -29,9 +29,9 @@ function Home() {
   }
 
   return (
-    <>
+    <>  
       <HomeNavbar />
-      <main className='tw-mt-4'>{user?.roles.includes('admin') ? <ProblemsSetAdmin /> : <ProblemsSet />}</main>
+      <main className='tw-mt-12'>{user?.roles.includes('admin') ? <ProblemsSetAdmin /> : <ProblemsSet />}</main>
       <Footer />
     </>
   );
