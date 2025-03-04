@@ -173,7 +173,7 @@ export class ContestsService {
     if (
       !userProgress.solvedProblemIds.some((pid) => pid.toString() === problemId)
     ) {
-      // อัปเดต solvedProblemIds และ totalPoints
+      // อัปเดต solvedProblemIds และ totalPoints ใน contest
       const updatedContest = await this.contestModel
         .findByIdAndUpdate(
           contestId,
@@ -192,6 +192,18 @@ export class ContestsService {
           },
         )
         .exec();
+
+      // อัปเดต distance ใน user โดยเพิ่ม points ของ problem
+      await this.userModel
+        .findByIdAndUpdate(
+          userId,
+          {
+            $inc: { distance: problem.points || 0 }, // เพิ่ม distance ตาม points
+          },
+          { new: true },
+        )
+        .exec();
+
       return updatedContest;
     }
 
