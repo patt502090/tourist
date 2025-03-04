@@ -36,7 +36,7 @@ docker-build:
 		--build-arg VITE_JUDGEAPI_BASE_URL="https://judge0-ce.p.rapidapi.com" \
 		--build-arg VITE_JUDGEAPI_API_KEY="your-api-key" \
 		--build-arg VITE_JUDGEAPI_HOST="judge0-ce.p.rapidapi.com" \
-		--build-arg VITE_GUEST_USER_PASSWORD="GuestGuestGuest" \
+		--build-arg VITE_GUEST_USER_PASSWORD="GuestGuest" \
 		--build-arg VITE_GUEST_USER_EMAIL="Guest@Guest.com" \
 		-f ./frontend/Dockerfile ./frontend
 	docker build -t asia-southeast1-docker.pkg.dev/tourist-452409/tourist-repo/backend:latest -f ./backend/Dockerfile ./backend
