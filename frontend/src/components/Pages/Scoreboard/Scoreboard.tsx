@@ -1,12 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {
-  createColumnHelper,
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-} from '@tanstack/react-table';
+import { createColumnHelper, useReactTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Backdrop from '@mui/material/Backdrop';
@@ -43,6 +38,15 @@ interface ScoreboardEntry {
   userId: string;
 }
 
+interface ParticipantProgress {
+  userId: string;
+  totalPoints: number;
+  solvedProblems?: number; // Optional เพราะบางตัวไม่มี
+  solvedProblemIds: string[];
+  _id: string;
+  username?: string; // Optional เพราะไม่ใช่ทุก object จะมี
+}
+
 export default function Scoreboard() {
   const [open, setOpen] = useState<boolean>(true);
   const { contestId } = useParams<{ contestId: string }>();
@@ -57,7 +61,7 @@ export default function Scoreboard() {
   } = useQuery({
     queryKey: ['contest', contestId],
     queryFn: () => {
-      if (!contestId) throw new Error("Contest ID is missing");
+      if (!contestId) throw new Error('Contest ID is missing');
       return getContest(contestId);
     },
     enabled: Boolean(contestId),
@@ -67,27 +71,34 @@ export default function Scoreboard() {
 
   const scoreboardData = useMemo(() => {
     if (!contestData?.participantProgress || !contestData?.participants) return [];
-    const scoreboard: ScoreboardEntry[] = contestData.participantProgress.map((progress: any, index: number) => {
-      const participant = contestData.participants.find((p: { _id: string; username?: string } | string): p is { _id: string; username?: string } => 
-        typeof p !== 'string' && p._id === progress.userId
-      ) || { username: 'Anonymous' };
-      return {
-        rank: index + 1,
-        username: typeof participant === 'string' ? 'Anonymous' : participant?.username || 'Anonymous',
-        totalPoints: progress.totalPoints || 0,
-        solvedProblems: progress.solvedProblems || 0,
-        userId: progress.userId,
-      };
-    });
-    scoreboard.sort((a, b) => b.totalPoints - a.totalPoints || a.username.localeCompare(b.username));
-    return scoreboard.map((entry, index) => ({ ...entry, rank: index + 1 }));
+
+    const scoreboard: ScoreboardEntry[] = contestData.participantProgress
+      .map((progress: ParticipantProgress, index: number) => {
+        // หา participant จาก participantProgress
+        const participant = contestData.participantProgress?.find(
+          (p: ParticipantProgress) => p.userId === progress.userId
+        ) || { username: 'Anonymous' };
+
+        return {
+          rank: index + 1,
+          // ตรวจสอบว่า participant มี username หรือไม่
+          username: 'username' in participant ? participant.username || 'Anonymous' : 'Anonymous',
+          totalPoints: progress.totalPoints || 0,
+          solvedProblems: progress.solvedProblems || progress.solvedProblemIds?.length || 0,
+          userId: progress.userId,
+        };
+      })
+      .sort((a, b) => b.totalPoints - a.totalPoints) // เรียงตามคะแนน
+      .map((entry, index) => ({ ...entry, rank: index + 1 })); // อัปเดต rank
+
+    return scoreboard;
   }, [contestData]);
 
   const columns = useMemo(
     () => [
       columnHelper.accessor('rank', { header: 'Rank', cell: (info) => info.getValue() }),
       columnHelper.accessor('username', { header: 'Username', cell: (info) => info.getValue() }),
-      columnHelper.accessor('totalPoints', { header: 'Total Points', cell: (info) => info.getValue() }),
+      columnHelper.accessor('totalPoints', { header: 'Total Distance', cell: (info) => info.getValue() }),
       columnHelper.accessor('solvedProblems', { header: 'Problems Solved', cell: (info) => info.getValue() }),
     ],
     []
@@ -108,7 +119,7 @@ export default function Scoreboard() {
   if (isLoading) {
     return (
       <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
-        <CircularProgress color="inherit" />
+        <CircularProgress color='inherit' />
       </Backdrop>
     );
   }
@@ -126,7 +137,7 @@ export default function Scoreboard() {
     >
       {/* Title */}
       <Typography
-        variant="h4"
+        variant='h4'
         gutterBottom
         sx={{
           fontWeight: 'bold',
@@ -140,12 +151,12 @@ export default function Scoreboard() {
           letterSpacing: '2px',
         }}
       >
-        {contestData?.title || 'Unnamed Contest'} - SCOREBOARD
+        {contestData?.title || 'Unnamed Contest'} - ADVENTURE TABLE
       </Typography>
 
       {/* Back Button */}
       <Button
-        variant="contained"
+        variant='contained'
         component={Link}
         to={`/contests/${contestId}`}
         sx={{
@@ -193,7 +204,7 @@ export default function Scoreboard() {
                     letterSpacing: '1px',
                   }}
                 >
-                  {header.isPlaceholder ? null : header.column.columnDef.header as string}
+                  {header.isPlaceholder ? null : (header.column.columnDef.header as string)}
                 </TableCell>
               ))}
             </TableRow>
@@ -223,9 +234,15 @@ export default function Scoreboard() {
                 >
                   {cell.column.id === 'username' && row.original.userId === user?._id
                     ? `${cell.getValue() as string} (You)`
-                    : cell.column.id === 'rank' && Number(cell.getValue()) <= 3
-                    ? `${cell.getValue()} 🏆` // Trophy for top 3
-                    : cell.getValue() as string}
+                    : cell.column.id === 'rank'
+                      ? Number(cell.getValue()) === 1
+                        ? '1 🥇' // อันดับ 1
+                        : Number(cell.getValue()) === 2
+                          ? '2 🥈' // อันดับ 2
+                          : Number(cell.getValue()) === 3
+                            ? '3 🥉' // อันดับ 3
+                            : (cell.getValue() as string)
+                      : (cell.getValue() as string)}
                 </TableCell>
               ))}
             </TableRow>
@@ -235,7 +252,7 @@ export default function Scoreboard() {
 
       {scoreboardData.length === 0 && (
         <Typography
-          variant="body1"
+          variant='body1'
           sx={{
             marginTop: '30px',
             color: '#ff8e53',

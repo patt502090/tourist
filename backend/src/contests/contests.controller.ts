@@ -7,6 +7,7 @@ import {
   Delete,
   Put,
   NotFoundException,
+  Patch,
 } from '@nestjs/common';
 import { ContestsService } from './contests.service';
 import { CreateContestDto } from './dto/create-contest.dto';

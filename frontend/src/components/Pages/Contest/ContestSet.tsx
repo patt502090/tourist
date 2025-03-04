@@ -64,11 +64,11 @@ export default function ProblemsSet() {
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [timeDisplay, setTimeDisplay] = useState<string>(''); // Unified time display
-  const [dialogOpen, setDialogOpen] = useState<boolean>(false); // For confirmation dialog
-  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false); // For feedback
-  const [snackbarMessage, setSnackbarMessage] = useState<string>(''); // Feedback message
-  const [showJoinMessage, setShowJoinMessage] = useState<boolean>(false); // To show join message
+  const [timeDisplay, setTimeDisplay] = useState<string>('');
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+  const [showJoinMessage, setShowJoinMessage] = useState<boolean>(false);
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const handleClose = () => setOpen(false);
   const columnHelper = createColumnHelper<ProblemData>();
@@ -179,7 +179,7 @@ export default function ProblemsSet() {
 
   const confirmJoinContest = async () => {
     try {
-      await joinContestMutation.mutateAsync(); // Wait for the join mutation
+      await joinContestMutation.mutateAsync();
       setSnackbarMessage('Successfully joined the contest!');
       setSnackbarOpen(true);
 
@@ -187,9 +187,9 @@ export default function ProblemsSet() {
       const startTime = contestData?.startTime ? new Date(contestData.startTime).getTime() : Infinity;
 
       if (currentTime < startTime) {
-        setShowJoinMessage(true); // Show join message if contest hasn't started
+        setShowJoinMessage(true);
       } else {
-        setShowJoinMessage(false); // Hide join message and show table if contest has started
+        setShowJoinMessage(false);
       }
     } catch (err) {
       const errorMessage = (err as any).response?.data?.message || (err as any).message || 'Failed to join contest';
@@ -331,7 +331,26 @@ export default function ProblemsSet() {
 
       {/* Join Button or Scoreboard */}
       <Box sx={{ margin: '20px 0' }}>
-        {hasJoined ? (
+        {!hasJoined ? (
+          <Button
+            variant='contained'
+            color='primary'
+            onClick={handleJoinContest}
+            sx={{ padding: '10px 20px', fontSize: '16px' }}
+          >
+            Join Contest
+          </Button>
+        ) : contestData && new Date() < new Date(contestData.startTime) ? (
+          <Button
+            variant='contained'
+            color='primary'
+            component={Link}
+            to={`/contests/${contestId}/scoreboard`}
+            sx={{ padding: '10px 20px', fontSize: '16px' }}
+          >
+            Show Paticipants
+          </Button>
+        ) : (
           <Button
             variant='contained'
             color='primary'
@@ -340,15 +359,6 @@ export default function ProblemsSet() {
             sx={{ padding: '10px 20px', fontSize: '16px' }}
           >
             View Scoreboard
-          </Button>
-        ) : (
-          <Button
-            variant='contained'
-            color='primary'
-            onClick={handleJoinContest}
-            sx={{ padding: '10px 20px', fontSize: '16px' }}
-          >
-            Join Contest
           </Button>
         )}
       </Box>

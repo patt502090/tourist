@@ -23,18 +23,20 @@ export class Contest extends Document {
   @Prop({
     type: [
       {
-        userId: { type: Types.ObjectId, ref: () => User },
-        totalPoints: { type: Number, default: 0 }, // เปลี่ยนชื่อเป็น totalPoints เพื่อสะท้อนคะแนนรวม
-        solvedProblemIds: [{ type: Types.ObjectId, ref: () => Problem }], // รายการโจทย์ที่แก้ได้
+        userId: { type: Types.ObjectId, ref: () => User, required: true },
+        username: { type: String, required: true }, // เพิ่มฟิลด์นี้ใน schema
+        email: { type: String, required: true },    // เพิ่มฟิลด์นี้ใน schema
+        totalPoints: { type: Number, default: 0 },
+        solvedProblemIds: [{ type: Types.ObjectId, ref: () => Problem }],
       },
     ],
     default: [],
   })
   participantProgress: {
     userId: Types.ObjectId;
-    username: string; // เพิ่มฟิลด์นี้
-    email: string; // เพิ่มฟิลด์นี้
-    totalPoints: number; // คะแนนรวมจากการแก้โจทย์
+    username: string;
+    email: string;
+    totalPoints: number;
     solvedProblemIds: Types.ObjectId[];
   }[];
 }

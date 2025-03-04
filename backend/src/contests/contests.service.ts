@@ -41,22 +41,39 @@ export class ContestsService {
     return this.contestModel.findByIdAndDelete(id).exec();
   }
 
-  async addParticipant(
-    contestId: string,
-    userId: string,
-  ): Promise<{ contest: Contest; user: User }> {
+  async addParticipant(contestId: string, userId: string): Promise<{ contest: Contest; user: User }> {
     const contest = await this.contestModel.findById(contestId).exec();
     if (!contest)
       throw new NotFoundException(`Contest with ID ${contestId} not found`);
-
+  
     const user = await this.userModel.findById(userId).exec();
     if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
-
+  
     const userExists = contest.participantProgress.some(
       (p) => p.userId.toString() === userId,
     );
-    if (!userExists) {
-      await this.contestModel
+  
+    let updatedContest;
+    if (userExists) {
+      // อัปเดตข้อมูลถ้ามีอยู่แล้ว
+      updatedContest = await this.contestModel
+        .findByIdAndUpdate(
+          contestId,
+          {
+            $set: {
+              'participantProgress.$[elem].username': user.username,
+              'participantProgress.$[elem].email': user.email,
+            },
+          },
+          {
+            arrayFilters: [{ 'elem.userId': new Types.ObjectId(userId) }],
+            new: true,
+          },
+        )
+        .exec();
+    } else {
+      // เพิ่มใหม่ถ้ายังไม่มี
+      updatedContest = await this.contestModel
         .findByIdAndUpdate(
           contestId,
           {
@@ -83,7 +100,7 @@ export class ContestsService {
       )
       .exec();
 
-    const updatedContest = await this.contestModel.findById(contestId).exec();
+    updatedContest = await this.contestModel.findById(contestId).exec();
     return { contest: updatedContest, user: updatedUser };
   }
 
