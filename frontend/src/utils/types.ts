@@ -16,17 +16,17 @@ export interface Problem {
   title: string;
   description: string;
   difficulty: 'easy' | 'medium' | 'hard';
-  sampleInput: string;
-  sampleOutput: string;
+  sampleInput?: string;
+  sampleOutput?: string;
   testCases: { input: string; output: string }[];
   status: string;
-  _id: string;
+  _id?: string | undefined;
   starterCode: { lang_id: number; code: string }[];
   systemCode: { lang_id: number; code: string }[];
-  imports: { lang_id: number; code: string }[];
+  imports?: { lang_id: number; code: string }[];
   metadata: metadata;
-  languagestoskip: number[];
-  contest?: string;
+  languagestoskip?: number[];
+  contestId?: string | null;
   points?: number;
 }
 
@@ -91,11 +91,13 @@ export interface validateSessionRes extends Omit<commonresponse, 'data'> {
 }
 
 export interface metadata {
-  input_format: string;
-  output_format: string;
-  judge_input_template: string;
-  variables_names: Record<string, string>;
-  variables_types: Record<string, string>;
+  input_format?: string;
+  output_format?: string;
+  judge_input_template?: string;
+  variables_names?: Record<string, string>;
+  variables_types?: Record<string, string>;
+  timeLimit?: number;
+  memoryLimit?: number;
 }
 export interface inputformat extends Omit<metadata, 'judge_input_temple' | 'output_format'> {}
 export interface TabPanelProps {

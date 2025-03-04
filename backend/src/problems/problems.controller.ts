@@ -62,7 +62,7 @@ export class ProblemsController {
   }
 
   @Roles(Role.Admin)
-  @UseGuards(RolesGaurd, SessionGuard)
+  @UseGuards(AuthGuard, SessionGuard)
   // @UseGuards(RolesGaurd)
   @Patch(':id/:userId')
   async update(
