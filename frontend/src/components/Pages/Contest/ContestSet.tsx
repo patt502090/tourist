@@ -54,7 +54,7 @@ interface ProblemData {
 }
 
 interface Problem {
-  data: ProblemData;
+  data?: ProblemData;
   message: string;
   status: string;
 }
@@ -88,7 +88,9 @@ export default function ProblemsSet() {
   } = useQuery({
     queryKey: ['contest', contestId],
     queryFn: () => {
-      if (!contestId) throw new Error('Contest ID is missing');
+      if (!contestId) {
+        throw new Error('Contest ID is missing');
+      }
       return getContest(contestId);
     },
     enabled: Boolean(contestId),
@@ -114,9 +116,9 @@ export default function ProblemsSet() {
     const problemData = (contestData?.problems || []) as unknown as Problem[];
     return problemData.map((problem: Problem) => ({
       ...problem.data,
-      _id: problem.data._id,
-      title: problem.data.title || 'Untitled',
-      difficulty: problem.data.difficulty || 'unknown',
+      _id: problem.data?._id || '',
+      title: problem.data?.title || 'Untitled',
+      difficulty: problem.data?.difficulty || 'unknown',
     }));
   }, [contestData]);
 
@@ -127,7 +129,9 @@ export default function ProblemsSet() {
 
   // Countdown logic
   useEffect(() => {
-    if (!contestData?.startTime) return;
+    if (!contestData?.startTime) {
+      return;
+    }
 
     const startTime = new Date(contestData.startTime).getTime();
     const endTime = contestData.endTime ? new Date(contestData.endTime).getTime() : null;
@@ -257,7 +261,10 @@ export default function ProblemsSet() {
     state: { columnFilters },
     filterFns: {
       difficultyFilter: (row, columnId, filterValue) => {
-        if (filterValue === 'all') return true;
+        if (filterValue === 'all') 
+        {
+          return true;
+        }
         const column = columnId.toLowerCase();
         return row.original[column] === filterValue;
       },
@@ -404,10 +411,11 @@ export default function ProblemsSet() {
           '& .MuiDialog-paper': {
             borderRadius: '12px',
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
-            background: (theme) =>
+            background: (theme) => (
               theme.palette.mode === 'dark'
                 ? 'linear-gradient(135deg, #1A1F2E 30%, #0A0E17 90%)'
-                : 'linear-gradient(135deg, #FFFFFF 30%, #F6F8FA 90%)',
+                : 'linear-gradient(135deg, #FFFFFF 30%, #F6F8FA 90%)'
+            ),
             border: (theme) => (theme.palette.mode === 'dark' ? '1px solid #FF69B4' : '1px solid #E8ECEF'),
             width: '400px',
           },
@@ -420,8 +428,9 @@ export default function ProblemsSet() {
             fontSize: '1.5rem',
             color: (theme) => (theme.palette.mode === 'dark' ? '#FF69B4' : '#424242'),
             textAlign: 'center',
-            borderBottom: (theme) =>
-              theme.palette.mode === 'dark' ? '1px solid rgba(255, 105, 180, 0.3)' : '1px solid #E8ECEF',
+            borderBottom: (theme) => (
+              theme.palette.mode === 'dark' ? '1px solid rgba(255, 105, 180, 0.3)' : '1px solid #E8ECEF'
+            ),
             padding: '16px 24px',
             backgroundColor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255, 105, 180, 0.1)' : 'transparent'),
           }}
@@ -451,8 +460,9 @@ export default function ProblemsSet() {
             padding: '16px 24px',
             justifyContent: 'center',
             gap: 2,
-            borderTop: (theme) =>
-              theme.palette.mode === 'dark' ? '1px solid rgba(255, 105, 180, 0.3)' : '1px solid #E8ECEF',
+            borderTop: (theme) => (
+              theme.palette.mode === 'dark' ? '1px solid rgba(255, 105, 180, 0.3)' : '1px solid #E8ECEF'
+            ),
           }}
         >
           <Button
@@ -465,8 +475,9 @@ export default function ProblemsSet() {
               textTransform: 'capitalize',
               color: (theme) => (theme.palette.mode === 'dark' ? '#00E5FF' : '#FF9999'),
               '&:hover': {
-                backgroundColor: (theme) =>
-                  theme.palette.mode === 'dark' ? 'rgba(0, 229, 255, 0.1)' : 'rgba(255, 153, 153, 0.1)',
+                backgroundColor: (theme) => (
+                    theme.palette.mode === 'dark' ? 'rgba(0, 229, 255, 0.1)' : 'rgba(255, 153, 153, 0.1)'
+                ),
               },
             }}
           >

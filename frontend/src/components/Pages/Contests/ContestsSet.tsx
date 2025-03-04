@@ -219,7 +219,9 @@ export default function ContestsSet() {
         return row.original[column].toLowerCase().includes(filterValue.toLowerCase());
       },
       timeStatusFilter: (row, _columnId, filterValue) => {
-        if (filterValue === 'all') return true;
+        if (filterValue === 'all'){
+            return true;
+        }
 
         const now = new Date();
         const start = row.original.startTime ? new Date(row.original.startTime) : null;
@@ -279,19 +281,22 @@ export default function ContestsSet() {
           textAlign: 'center',
           fontFamily: "'Roboto Slab', 'Poppins', serif", // Refined font stack
           letterSpacing: '0.5px', // Subtle spacing for elegance
-          textShadow: (theme) =>
+          textShadow: (theme) => (
             theme.palette.mode === 'dark'
-              ? '0 2px 4px rgba(255, 105, 180, 0.3)' // Cyberpunk neon glow
-              : '0 2px 4px rgba(0, 0, 0, 0.1)', // Cute soft shadow
+              ? '0 2px 4px rgba(255, 105, 180, 0.3)'  // Cyberpunk neon glow
+              : '0 2px 4px rgba(0, 0, 0, 0.1)'        // Cute soft shadow
+          ),
           lineHeight: 1.2, // Tighter line height for neatness
           padding: '8px 16px', // Slight padding for a framed effect
-          background: (theme) =>
+          background: (theme) => (
             theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(255, 20, 147, 0.1), rgba(0, 229, 255, 0.1))' // Cyberpunk gradient
-              : 'linear-gradient(135deg, rgba(255, 138, 138, 0.05), rgba(255, 255, 255, 0.05))', // Cute subtle gradient
+              : 'linear-gradient(135deg, rgba(255, 138, 138, 0.05), rgba(255, 255, 255, 0.05))'
+            ), // Cute subtle gradient
           borderRadius: '8px', // Rounded edges
-          border: (theme) =>
-            theme.palette.mode === 'dark' ? '1px solid rgba(255, 105, 180, 0.3)' : '1px solid rgba(0, 0, 0, 0.05)',
+          border: (theme) => (
+            theme.palette.mode === 'dark' ? '1px solid rgba(255, 105, 180, 0.3)' : '1px solid rgba(0, 0, 0, 0.05)'
+          ),
         }}
       >
         List of Competitions

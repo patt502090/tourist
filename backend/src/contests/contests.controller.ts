@@ -79,4 +79,21 @@ export class ContestsController {
       throw new NotFoundException('problemId is required in request body');
     return this.contestsService.addProblem(contestId, problemId);
   }
+
+  @Delete(':contestId/problems/:problemId')
+  async removeProblem(
+    @Param('contestId') contestId: string,
+    @Param('problemId') problemId: string,
+  ) {
+    const updatedContest = await this.contestsService.removeProblem(
+      contestId,
+      problemId,
+    );
+    if (!updatedContest) {
+      throw new NotFoundException(
+        `Contest with ID ${contestId} not found or problem removal failed`,
+      );
+    }
+    return updatedContest;
+  }
 }
