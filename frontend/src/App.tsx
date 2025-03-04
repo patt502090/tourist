@@ -6,7 +6,7 @@ import { CookiesProvider } from 'react-cookie';
 import { Toaster } from 'sonner';
 import { AuthContextWrapper } from './context/AuthContext';
 import './App.css';
-
+import '@fontsource/poppins'; // เพิ่มในไฟล์นี้หรือ global CSS
 const queryClient = new QueryClient();
 function App() {
   return (
