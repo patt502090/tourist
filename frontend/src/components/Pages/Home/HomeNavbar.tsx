@@ -28,7 +28,7 @@ export default function HomeNavbar() {
                 component={ReactLink}
                 to='/signin'
               >
-                Sign in Tourist
+                Sign in
               </Link>
               <span>or</span>
               <Link
