@@ -41,18 +41,21 @@ export class ContestsService {
     return this.contestModel.findByIdAndDelete(id).exec();
   }
 
-  async addParticipant(contestId: string, userId: string): Promise<{ contest: Contest; user: User }> {
+  async addParticipant(
+    contestId: string,
+    userId: string,
+  ): Promise<{ contest: Contest; user: User }> {
     const contest = await this.contestModel.findById(contestId).exec();
     if (!contest)
       throw new NotFoundException(`Contest with ID ${contestId} not found`);
-  
+
     const user = await this.userModel.findById(userId).exec();
     if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
-  
+
     const userExists = contest.participantProgress.some(
       (p) => p.userId.toString() === userId,
     );
-  
+
     let updatedContest;
     if (userExists) {
       // อัปเดตข้อมูลถ้ามีอยู่แล้ว
@@ -170,7 +173,7 @@ export class ContestsService {
     if (
       !userProgress.solvedProblemIds.some((pid) => pid.toString() === problemId)
     ) {
-      // อัปเดต solvedProblemIds และ totalPoints
+      // อัปเดต solvedProblemIds และ totalPoints ใน contest
       const updatedContest = await this.contestModel
         .findByIdAndUpdate(
           contestId,
@@ -189,6 +192,18 @@ export class ContestsService {
           },
         )
         .exec();
+
+      // อัปเดต distance ใน user โดยเพิ่ม points ของ problem
+      await this.userModel
+        .findByIdAndUpdate(
+          userId,
+          {
+            $inc: { distance: problem.points || 0 }, // เพิ่ม distance ตาม points
+          },
+          { new: true },
+        )
+        .exec();
+
       return updatedContest;
     }
 
@@ -224,6 +239,40 @@ export class ContestsService {
       .findByIdAndUpdate(
         problemId,
         { contest: new Types.ObjectId(contestId) },
+        { new: true },
+      )
+      .exec();
+
+    return updatedContest;
+  }
+  async removeProblem(contestId: string, problemId: string): Promise<Contest> {
+    // ค้นหา contest
+    const contest = await this.contestModel.findById(contestId).exec();
+    if (!contest) {
+      throw new NotFoundException(`Contest with ID ${contestId} not found`);
+    }
+
+    // ตรวจสอบว่า problem มีอยู่ใน contest หรือไม่
+    if (!contest.problems.some((pid) => pid.toString() === problemId)) {
+      throw new NotFoundException(
+        `Problem ${problemId} not found in contest ${contestId}`,
+      );
+    }
+
+    // ลบ problem ออกจาก array problems
+    const updatedContest = await this.contestModel
+      .findByIdAndUpdate(
+        contestId,
+        { $pull: { problems: new Types.ObjectId(problemId) } },
+        { new: true },
+      )
+      .exec();
+
+    // ลบการอ้างอิง contest ออกจาก problem (ถ้ามีฟิลด์ contest ใน Problem schema)
+    await this.problemModel
+      .findByIdAndUpdate(
+        problemId,
+        { $unset: { contest: '' } }, // ลบฟิลด์ contest
         { new: true },
       )
       .exec();

@@ -25,7 +25,7 @@ export class Contest extends Document {
       {
         userId: { type: Types.ObjectId, ref: () => User, required: true },
         username: { type: String, required: true }, // เพิ่มฟิลด์นี้ใน schema
-        email: { type: String, required: true },    // เพิ่มฟิลด์นี้ใน schema
+        email: { type: String, required: true }, // เพิ่มฟิลด์นี้ใน schema
         totalPoints: { type: Number, default: 0 },
         solvedProblemIds: [{ type: Types.ObjectId, ref: () => Problem }],
       },
