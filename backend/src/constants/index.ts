@@ -6,5 +6,16 @@ const commonLanguages = [
   { id: 91, name: 'Java' },
   { id: 93, name: 'JavaScript' },
   { id: 92, name: 'Python' },
+  { id: 84, name: '.NET' },
+  { id: 101, name: 'TypeScript' },
+  { id: 99, name: 'R' },
+  { id: 69, name: 'Prolog' },
+  { id: 43, name: 'Plain Text' },
+  { id: 85, name: 'Perl' },
+  { id: 67, name: 'Pascal' },
+  { id: 39, name: 'Kotlin' },
+  { id: 77, name: 'COBOL' },
+  { id: 46, name: 'Bash' },
+  { id: 45, name: 'Assembly' },
 ];
 export { commonLanguages };

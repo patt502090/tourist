@@ -11,6 +11,17 @@ export const supportedLanguages: Record<number, string> = {
   91: 'Java',
   93: 'JavaScript',
   92: 'Python',
+  84: '.NET',
+  101:'TypeScript',
+  99: 'R',
+  69:'Prolog',
+  43:'Plain Text',
+  85:'Perl',
+  67:'Pascal',
+  39:'Kotlin',
+  77:'COBOL',
+  46:'Bash',
+  45:'Assembly',
 };
 export const lighttheme = {
   inherit: false,

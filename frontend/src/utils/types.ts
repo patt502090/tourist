@@ -134,7 +134,7 @@ export interface user {
   favoriteProgrammingLanguage: number;
   roles: string[];
   submissions: problemsubmission[];
-  distace: number;
+  distance?: number;
 }
 export interface createUser extends Partial<user> {}
 export interface updateuser extends Partial<user> {}
