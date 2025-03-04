@@ -38,10 +38,10 @@ export default function ProblemsSet() {
 
   const user = useUserSlice((state) => state.user);
 
-  // Filter problems to only include those without a contest
   const problems = useMemo(() => {
     return allProblems.filter((problem) => !problem.contestId || problem.contestId === '');
   }, [allProblems]);
+  
 
   const columns = useMemo(
     () => [

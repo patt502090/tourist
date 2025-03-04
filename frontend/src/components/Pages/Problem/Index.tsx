@@ -386,7 +386,7 @@ export default function Problem() {
       const batchResults = await Promise.all(batchPromises);
       setProblemSubmissionLoading(false);
 
-      const filteredResults = batchResults.filter((result): result is submission => !!result);
+      const filteredResults = batchResults.filter((result): result is submission => Boolean(result));
       if (!filteredResults.length) {
         console.error('No valid submission results');
         return;
@@ -421,10 +421,10 @@ export default function Problem() {
           },
         ],
       });
-      if (problemInfo?.contest) {
-        console.log('Submitting to contest:', problemInfo.contest);
+      if (problemInfo?.contestId) {
+        console.log('Submitting to contest:', problemInfo.contestId);
         await updateContestProblemMutation.mutateAsync({
-          contestId: problemInfo.contest,
+          contestId: problemInfo.contestId,
           userId: user?._id as string,
           problemId: problemname?.slice(0, 24) as string,
           status: status ? 'Accepted' : 'Wrong Answer',
@@ -750,7 +750,7 @@ export default function Problem() {
                         <CustomTabPanel index={i} key={`language${s.language_id}`} value={submissionTab}>
                           <ProblemResults
                             inputValues={inputvalues}
-                            variables={Object.values(problemInfo?.metadata.variables_names)}
+                            variables={Object.values(problemInfo?.metadata.variables_names ?? {})}
                             standardOutput={s.stdout}
                             expectedOutput={s.expected_output}
                           />
