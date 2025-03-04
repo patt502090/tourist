@@ -36,6 +36,7 @@ import { useCodeStorage } from '../../../db';
 import OpenInFullOutlinedIcon from '@mui/icons-material/OpenInFullOutlined';
 import RestoreOutlinedIcon from '@mui/icons-material/RestoreOutlined';
 import useFullScreen from '../../../hooks/useFullScreen';
+import { protectedapi } from '../../../API/Index';
 
 export default function Problem() {
   const { problemname } = useParams();
@@ -103,6 +104,14 @@ export default function Problem() {
   });
 
   const { saveUserCode, getUserCode } = useCodeStorage();
+
+  const updateContestProblemMutation = useMutation({
+    mutationFn: ({ contestId, userId, problemId, status }: { contestId: string; userId: string; problemId: string; status: string }) =>
+      protectedapi.post(`/contests/${contestId}/submissions`, { userId, problemId, status }).then((res) => res.data),
+    onError: (err: any) => {
+      console.error('Failed to update contest problem solved status:', err.response?.data?.message || err.message);
+    },
+  });
 
   useEffect(() => {
     setCurrentTab(0);
@@ -412,6 +421,15 @@ export default function Problem() {
           },
         ],
       });
+      if (problemInfo?.contest) {
+        console.log('Submitting to contest:', problemInfo.contest);
+        await updateContestProblemMutation.mutateAsync({
+          contestId: problemInfo.contest,
+          userId: user?._id as string,
+          problemId: problemname?.slice(0, 24) as string,
+          status: status ? 'Accepted' : 'Wrong Answer',
+        });
+      }
     } catch (error: any) {
       setProblemSubmissionLoading(false);
       setProblemSubmissionStatus('Rejected');

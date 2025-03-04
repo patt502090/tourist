@@ -5,20 +5,69 @@ import { useUserSlice } from '../store/user';
 import { useProblemSlice } from '../store/problemSlice/problem';
 import { useQuery } from '@tanstack/react-query';
 import getProblems from '../services/getProblems';
+import getContests from '../services/getContests';
+import { useContestSlice } from '../store/contestSlice/contest';
 
 export const AuthContext = createContext<authCtx>({ isLoading: false, isError: false, error: null });
 
-export const useAuthContext = () => {
-  const ctx = useContext(AuthContext);
-  return ctx;
-};
+export const useAuthContext = () => useContext(AuthContext);
 
 export const AuthContextWrapper: FC<contextWrapperProps> = ({ children }) => {
   const signIn = useAuthSlice((state) => state.signIn);
   const checkSession = useUserSlice((state) => state.checkSession);
   const sessionLoading = useUserSlice((state) => state.sessionLoading);
   const user = useUserSlice((state) => state.user);
+  const { setProblems } = useProblemSlice();
+  const { setContests } = useContestSlice();
 
+  // Fetch problems
+  const {
+    data: problemsData,
+    isLoading: problemsLoading,
+    isError: problemsError,
+    error: problemsFetchError,
+  } = useQuery({
+    queryKey: ['problems'],
+    queryFn: getProblems,
+    refetchOnWindowFocus: false,
+  });
+
+  const {
+    data: contestsData,
+    isLoading: contestsLoading,
+    isError: contestsError,
+    error: contestsFetchError,
+  } = useQuery({
+    queryKey: ['contests'],
+    queryFn: getContests,
+    refetchOnWindowFocus: false,
+  });
+
+  // Check session
+  useEffect(() => {
+    if (!['/signin', '/signup'].includes(window.location.pathname)) {
+      checkSession();
+    }
+  }, []);
+
+  // Update contests in state
+  useEffect(() => {
+    if (contestsData) {
+      const contests = Array.isArray(contestsData) ? contestsData : contestsData.data || [];
+      setContests(contests);
+      // console.log('Contests set in store:', contests);
+    }
+  }, [contestsData, setContests]);
+
+  // Update problems in state
+  useEffect(() => {
+    if (problemsData?.data) {
+      setProblems(problemsData.data);
+      // console.log('Problems set in store:', problemsData.data);
+    }
+  }, [problemsData, setProblems]);
+
+  // Handle session login
   useEffect(() => {
     if (sessionLoading === 'Completed') {
       if (!user) {
@@ -27,23 +76,23 @@ export const AuthContextWrapper: FC<contextWrapperProps> = ({ children }) => {
         signIn();
       }
     }
-  }, [sessionLoading]);
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['problems'],
-    queryFn: getProblems,
-    refetchOnWindowFocus: false,
-  });
-  const { setProblems } = useProblemSlice();
-  useEffect(() => {
-    if (data && data.data) {
-      setProblems(data.data);
-    }
-  }, [data]);
-  useEffect(() => {
-    if (!['/signin', '/signup'].includes(window.location.pathname)) {
-      checkSession();
-    }
-  }, []);
+  }, [sessionLoading, user, signIn]);
 
-  return <AuthContext.Provider value={{ isLoading, isError, error }}>{children}</AuthContext.Provider>;
+  // Debug logs
+  // useEffect(() => {
+  //   console.log('Problems:', { problemsData, problemsLoading, problemsError, problemsFetchError });
+  //   console.log('Contests:', { contestsData, contestsLoading, contestsError, contestsFetchError });
+  // }, [problemsData, contestsData, problemsLoading, contestsLoading]);
+
+  return (
+    <AuthContext.Provider
+      value={{
+        isLoading: problemsLoading || contestsLoading || sessionLoading === 'Pending',
+        isError: problemsError || contestsError,
+        error: problemsFetchError || contestsFetchError,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };

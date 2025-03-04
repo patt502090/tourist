@@ -8,7 +8,7 @@ import { useUserSlice } from '../../../store/user';
 import HomeNavbar from '../Home/HomeNavbar';
 import ContestsSet from './ContestsSet';
 
-function ContestsList() {
+function Contests() {
   const isLogedIn = useAuthSlice((state) => state.isLogedIn);
   const user = useUserSlice((state) => state.user);
   const setUser = useUserSlice((state) => state.setUser);
@@ -38,4 +38,4 @@ function ContestsList() {
   );
 }
 
-export default ContestsList;
+export default Contests;

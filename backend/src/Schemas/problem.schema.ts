@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 import { codesnipet, metadata } from 'src/interfaces/config.interface';
+import { Contest } from './contest.schema';
 
 export type ProblemDocument = HydratedDocument<Problem>;
 const difficultyLevels = ['easy', 'medium', 'hard'];
@@ -39,6 +40,12 @@ export class Problem {
 
   @Prop({ type: Object })
   metadata: metadata;
+
+  @Prop({ type: Types.ObjectId, ref: 'Contest' })
+  contest?: Contest;
+
+  @Prop({ type: Number, default: 100 })
+  points: number;
 }
 
 export const ProblemSchema = SchemaFactory.createForClass(Problem);

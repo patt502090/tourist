@@ -29,7 +29,10 @@ import { RetrytokenModule } from 'src/retrytoken/retrytoken.module';
   ],
   providers: [UsersService],
   controllers: [UsersController],
-  exports: [UsersService],
+  exports: [
+    UsersService,
+    MongooseModule.forFeature([{ name: User.name, schema: Userschema }]),
+  ],
 })
 export class UsersModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -24,7 +24,8 @@ import { SessionGuard } from 'src/sessiontoken/session.guard';
 export class ProblemsController {
   constructor(private readonly problemsService: ProblemsService) {}
 
-  @UseGuards(AuthGuard, RolesGaurd, SessionGuard)
+  @UseGuards(AuthGuard, SessionGuard)
+  // @UseGuards(RolesGaurd)
   @Post('createProblem/:userId')
   @Roles(Role.Admin)
   async create(@Body() createProblemDto: CreateProblemDto) {
@@ -61,7 +62,8 @@ export class ProblemsController {
   }
 
   @Roles(Role.Admin)
-  @UseGuards(AuthGuard, RolesGaurd, SessionGuard)
+  @UseGuards(RolesGaurd, SessionGuard)
+  // @UseGuards(RolesGaurd)
   @Patch(':id/:userId')
   async update(
     @Param('id') id: ObjectId,
@@ -87,4 +89,26 @@ export class ProblemsController {
       return getFailureResponse('An unknown error occurred');
     }
   }
+
+  // @Roles(Role.Admin)
+  // @UseGuards(AuthGuard, RolesGaurd, SessionGuard)
+  // @Patch(':id/add-points/:userId')
+  // async addPoints(
+  //   @Param('id') id: ObjectId,
+  //   @Body('points') points: number, // รับค่า points จาก body
+  // ) {
+  //   try {
+  //     if (!points || points <= 0) {
+  //       throw new Error('Points must be a positive number');
+  //     }
+  //     const updatedProblem = await this.problemsService.addPoints(id, points);
+  //     if (!updatedProblem) {
+  //       throw new NotFoundException(`Problem with ID ${id} not found`);
+  //     }
+  //     return updatedProblem;
+  //   } catch (error) {
+  //     if (error instanceof Error) return getFailureResponse(error.message);
+  //     return getFailureResponse('An unknown error occurred');
+  //   }
+  // }
 }

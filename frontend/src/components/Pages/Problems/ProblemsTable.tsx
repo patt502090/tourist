@@ -7,12 +7,10 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TablePagination from '@mui/material/TablePagination';
 import Paper from '@mui/material/Paper';
-import { Problem } from '../../../utils/types';
 import TablePaginationActions from './ProblemTableActions';
 import { styled } from '@mui/material/styles';
 import { usethemeUtils } from '../../../context/ThemeWrapper';
 import { Container, IconButton, SelectChangeEvent } from '@mui/material';
-import { Table as TableType } from '@tanstack/react-table';
 import DifficultyFilter from './DifficultyFilter';
 import StatusFilter from './StatusFilter';
 import ProblemSearch from './ProblemSearch';
@@ -30,8 +28,8 @@ function ProblemsTable({
   clear,
   reset,
 }: {
-  data: Problem[];
-  table: TableType<Problem>;
+  data: any;
+  table: any;
   handleDifficultChange: (event: SelectChangeEvent) => void;
   difficultyFilter: string;
   statusFilter: string;
@@ -73,9 +71,9 @@ function ProblemsTable({
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650, maxHeight: '75dvh', overflowY: 'auto' }} aria-label='simple table'>
           <TableHead>
-            {table.getHeaderGroups().map((headerGroup) => (
+            {table.getHeaderGroups().map((headerGroup:any) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
+                {headerGroup.headers.map((header:any) => {
                   return (
                     <TableCell key={header.id} colSpan={header.colSpan}>
                       {header.isPlaceholder ? null : (
@@ -88,10 +86,10 @@ function ProblemsTable({
             ))}
           </TableHead>
           <TableBody>
-            {table.getRowModel().rows.map((row) => {
+            {table.getRowModel().rows.map((row:any) => {
               return (
                 <StyledTableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => {
+                  {row.getVisibleCells().map((cell:any) => {
                     return (
                       <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                     );

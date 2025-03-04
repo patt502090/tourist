@@ -12,7 +12,12 @@ import { ContestsModule } from './contests/contests.module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot(config().mongodb.database.connectionString),
+    MongooseModule.forRoot(config().mongodb.database.connectionString, {
+      connectionFactory: (connection) => {
+        console.log('MongoDB Connection String:', config().mongodb.database.connectionString);
+        return connection;
+      },
+    }),
     UsersModule,
     ProblemsModule,
     RetrytokenModule,
