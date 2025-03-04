@@ -6,15 +6,79 @@ import { UpdateContestDto } from './dto/update-contest.dto';
 import { Contest } from 'src/Schemas/contest.schema';
 import { User } from 'src/Schemas/user.schema';
 import { Problem } from 'src/Schemas/problem.schema';
-
+import { PubSub } from '@google-cloud/pubsub';
+import { format, differenceInMinutes } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
+import { SchedulerRegistry } from '@nestjs/schedule';
+import { CronJob } from 'cron';
 @Injectable()
 export class ContestsService {
+  private pubSubClient: PubSub;
+  private readonly timeZone = 'Asia/Bangkok'; // UTC+7
   constructor(
     @InjectModel(Contest.name) private contestModel: Model<Contest>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Problem.name) private problemModel: Model<Problem>,
-  ) {}
+    private schedulerRegistry: SchedulerRegistry,
+  ) {
+    this.pubSubClient = new PubSub({ projectId: 'tourist-452409' });
+    this.setupCronJob();
+  }
+  private setupCronJob() {
+    const job = new CronJob(
+      '0 */30 * * * *', // ทุก 30 นาที
+      () => this.checkUpcomingContests(),
+      null,
+      true,
+      this.timeZone,
+    );
+    this.schedulerRegistry.addCronJob('checkUpcomingContests', job);
+    job.start();
+  }
 
+  async checkUpcomingContests() {
+    const nowThai = toZonedTime(new Date(), this.timeZone); // เวลาไทยปัจจุบัน
+
+    const upcomingContests = await this.contestModel.find().exec();
+
+    for (const contest of upcomingContests) {
+      const startTimeThai = toZonedTime(contest.startTime, this.timeZone); // แปลงเป็นเวลาไทย
+      const timeDiffMinutes = differenceInMinutes(startTimeThai, nowThai); // นาทีที่เหลือ
+
+      if (timeDiffMinutes <= 30 && timeDiffMinutes > 0) {
+        await this.sendNotification(contest, startTimeThai);
+      }
+    }
+  }
+
+  async sendNotification(contest: Contest, startTimeThai: Date) {
+    const formattedTime = format(startTimeThai, 'dd/MM/yyyy HH:mm'); // เวลาไทย
+
+    // เตรียมข้อมูลสำหรับ Pub/Sub
+    const participants = contest.participantProgress.map((participant) => ({
+      userId: participant.userId.toString(),
+      username: participant.username,
+      email: participant.email,
+    }));
+
+    const data = JSON.stringify({
+      contestId: contest._id.toString(),
+      title: contest.title,
+      startTime: contest.startTime.toISOString(), // UTC
+      startTimeThai: formattedTime, // เวลาไทย
+      participants,
+    });
+
+    const dataBuffer = Buffer.from(data);
+    const topicName = 'contest-notifications';
+
+    try {
+      await this.pubSubClient.topic(topicName).publish(dataBuffer);
+      console.log(`เผยแพร่การแจ้งเตือนสำหรับ ${contest.title} ไปยัง Pub/Sub`);
+    } catch (error) {
+      console.error(`เกิดข้อผิดพลาดในการเผยแพร่ไปยัง Pub/Sub: ${error}`);
+    }
+  }
   async create(createContestDto: CreateContestDto): Promise<Contest> {
     const createdContest = new this.contestModel(createContestDto);
     return createdContest.save();

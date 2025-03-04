@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { RetrytokenModule } from './retrytoken/retrytoken.module';
 import { SessiontokenModule } from './sessiontoken/sessiontoken.module';
 import { ContestsModule } from './contests/contests.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ContestsModule } from './contests/contests.module';
       },
     }),
     UsersModule,
+    ScheduleModule.forRoot(),
     ProblemsModule,
     RetrytokenModule,
     AuthModule,
