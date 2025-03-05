@@ -361,13 +361,12 @@ export default function Problem() {
     }
 
     const submissionBatch = testcases.map(({ input, output }, i) => {
-      // If output is missing, compute it for palindrome logic
       let expectedOutput = output?.trim();
       if (!expectedOutput) {
         console.warn(`Testcase ${i} has no expected output in problemInfo, computing locally`);
-        const inputStr = input?.replace(/"/g, '') || ''; // Remove quotes (e.g., "madam" -> madam)
+        const inputStr = input?.replace(/"/g, '') || '';
         const isPalindrome = inputStr === inputStr.split('').reverse().join('');
-        expectedOutput = isPalindrome ? 'True' : 'False'; // Python boolean as string
+        expectedOutput = isPalindrome ? 'True' : 'False';
       }
       console.log(`Testcase ${i} input: ${input}, expected_output: ${expectedOutput}`);
 
