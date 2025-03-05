@@ -60,21 +60,24 @@ export default function Profile() {
           </Typography>
         </MenuItem>
         <MenuItem onClick={handleClose}>
-          <ListItemIcon
+          <MenuItem
             onClick={async () => {
-              await mutateAsync();
-              if (isError) {
+              try {
+                await mutateAsync();
+                setUser(null);
+                signOut();
+                navigate('/signin');
+                handleClose();
+              } catch (error) {
                 alert('An error occurred while signing out. Please try again.');
-                return;
               }
-              setUser(null);
-              signOut();
-              navigate('/signin');
             }}
           >
-            <LogoutIcon />
-          </ListItemIcon>
-          Logout
+            <ListItemIcon>
+              <LogoutIcon />
+            </ListItemIcon>
+            Logout
+          </MenuItem>
         </MenuItem>
       </Menu>
     </>

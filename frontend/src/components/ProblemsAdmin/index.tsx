@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Typography,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useAuthContext } from '../../context/AuthContext';
@@ -361,40 +362,60 @@ export default function ProblemsSetAdmin() {
 
   return (
     <>
-      <div className='flex justify-between items-center mb-4 max-w-4xl mx-auto'>
-        <div className='flex-1' />
-        <span className='text-2xl font-semibold text-gray-800'>Admin</span>
-        <div className='flex-1 flex justify-end'>
+      <div className='flex justify-center items-center py-6'>
+        <div className='flex flex-col items-center max-w-4xl w-full px-4'>
+          <Typography
+            variant='h4'
+            gutterBottom
+            sx={{
+              fontWeight: 'bold',
+              color: '#1976d2',
+              textAlign: { xs: 'center', sm: 'center' },
+            }}
+          >
+            Admin
+          </Typography>
           <Button
             variant='contained'
             startIcon={<AddIcon />}
             onClick={handleCreateClick}
-            className='bg-green-500 hover:bg-green-600 text-white px-4 py-2'
+            sx={{
+              backgroundColor: '#10b981',
+              '&:hover': { backgroundColor: '#059669' },
+              color: 'white',
+              padding: '8px 16px',
+            }}
           >
             Create Problem
           </Button>
         </div>
       </div>
-      <ProblemsTable
-        handleStatusChange={handleStatusChange}
-        difficultyFilter={difficultyFilter}
-        statusFilter={statusFilter}
-        handleDifficultChange={handleDifficultyChange}
-        table={table}
-        data={problems}
-        searchQuery={searchQuery}
-        handleQueryChange={handleQueryChange}
-        clear={() => {
-          setSearchQuery('');
-        }}
-        reset={() => {
-          setSearchQuery('');
-          setStatusFilter('all');
-          setDifficultyFilter('all');
-          table.getColumn('Difficulty')?.setFilterValue('all');
-          table.getColumn('Status')?.setFilterValue('all');
-        }}
-      />
+
+      {/* Content Section */}
+      <div className='flex-1 flex justify-center items-start'>
+        <div className='max-w-4xl w-full px-4'>
+          <ProblemsTable
+            handleStatusChange={handleStatusChange}
+            difficultyFilter={difficultyFilter}
+            statusFilter={statusFilter}
+            handleDifficultChange={handleDifficultyChange}
+            table={table}
+            data={problems}
+            searchQuery={searchQuery}
+            handleQueryChange={handleQueryChange}
+            clear={() => {
+              setSearchQuery('');
+            }}
+            reset={() => {
+              setSearchQuery('');
+              setStatusFilter('all');
+              setDifficultyFilter('all');
+              table.getColumn('Difficulty')?.setFilterValue('all');
+              table.getColumn('Status')?.setFilterValue('all');
+            }}
+          />
+        </div>
+      </div>
       <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)} maxWidth='md' fullWidth>
         <DialogTitle>Edit Problem</DialogTitle>
         <DialogContent className='space-y-4 py-4'>

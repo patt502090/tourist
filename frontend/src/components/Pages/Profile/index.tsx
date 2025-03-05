@@ -31,6 +31,7 @@ import { styled } from '@mui/system';
 import { keyframes } from '@emotion/react';
 import airplaneImage from '../../../assets/images/airplane.svg';
 import { supportedLanguages } from '../../../constants/Index';
+import { usethemeUtils } from '../../../context/ThemeWrapper';
 
 export default function ProfilePage() {
   const user = useUserSlice((state) => state.user);
@@ -41,6 +42,8 @@ export default function ProfilePage() {
     mutationKey: ['sign-out'],
     mutationFn: signOutAPI,
   });
+
+  const { colorMode }: { colorMode: 'light' | 'dark' } = usethemeUtils();
 
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [tabIndex, setTabIndex] = useState(0);
@@ -154,21 +157,24 @@ export default function ProfilePage() {
               </Typography>
             </MenuItem>
             <MenuItem onClick={handleClose}>
-              <ListItemIcon
+              <MenuItem
                 onClick={async () => {
-                  await mutateAsync();
-                  if (isError) {
+                  try {
+                    await mutateAsync();
+                    setUser(null);
+                    signOut();
+                    navigate('/signin');
+                    handleClose();
+                  } catch (error) {
                     alert('An error occurred while signing out. Please try again.');
-                    return;
                   }
-                  setUser(null);
-                  signOut();
-                  navigate('/signin');
                 }}
               >
-                <LogoutIcon />
-              </ListItemIcon>
-              Logout
+                <ListItemIcon>
+                  <LogoutIcon />
+                </ListItemIcon>
+                Logout
+              </MenuItem>
             </MenuItem>
           </Menu>
           <Box sx={{ width: '100%' }}>
@@ -323,22 +329,30 @@ export default function ProfilePage() {
                         <TableHead>
                           <TableRow>
                             <TableCell
-                              sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5', fontSize: { xs: '0.8rem', sm: '1rem' } }}
+                              className={`py-2 px-4 font-bold tracking-wide ${
+                                colorMode === 'dark' ? 'text-white bg-gray-800' : 'text-black bg-gray-200'
+                              } text-[0.8rem] sm:text-[1rem] font-orbitron`}
                             >
                               Problem
                             </TableCell>
                             <TableCell
-                              sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5', fontSize: { xs: '0.8rem', sm: '1rem' } }}
+                              className={`py-2 px-4 font-bold tracking-wide ${
+                                colorMode === 'dark' ? 'text-white bg-gray-800' : 'text-black bg-gray-200'
+                              } text-[0.8rem] sm:text-[1rem] font-orbitron`}
                             >
                               Status
                             </TableCell>
                             <TableCell
-                              sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5', fontSize: { xs: '0.8rem', sm: '1rem' } }}
+                              className={`py-2 px-4 font-bold tracking-wide ${
+                                colorMode === 'dark' ? 'text-white bg-gray-800' : 'text-black bg-gray-200'
+                              } text-[0.8rem] sm:text-[1rem] font-orbitron`}
                             >
                               Submitted At
                             </TableCell>
                             <TableCell
-                              sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5', fontSize: { xs: '0.8rem', sm: '1rem' } }}
+                              className={`py-2 px-4 font-bold tracking-wide ${
+                                colorMode === 'dark' ? 'text-white bg-gray-800' : 'text-black bg-gray-200'
+                              } text-[0.8rem] sm:text-[1rem] font-orbitron`}
                             >
                               Language
                             </TableCell>

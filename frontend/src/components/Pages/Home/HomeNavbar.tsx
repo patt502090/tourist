@@ -49,24 +49,27 @@ export default function HomeNavbar() {
 
   return (
     <>
-      <nav className="tw-container-lg tw-mx-auto tw-flex tw-justify-around tw-p-2 tw-bottom-2 tw-border-b-[#ffffff24]">
-        <div className="tw-flex tw-items-center tw-gap-2">
-          <img
-            src={colorMode === 'light' ? darklogo : lightlogo}
-            width={100}
-            height={80}
-            className="tw-object-contain"
-            alt="Logo"
-          />
-        </div>
-        <ul className="tw-list-none tw-flex tw-justify-between tw-items-center tw-gap-6">
+      <nav className='tw-container-lg tw-mx-auto tw-flex tw-justify-around tw-p-2 tw-bottom-2 tw-border-b-[#ffffff24]'>
+        <Link to='/' component={ReactLink} underline='hover'>
+          <div className='tw-flex tw-items-center tw-gap-2'>
+            <img
+              src={colorMode === 'light' ? darklogo : lightlogo}
+              width={100}
+              height={80}
+              className='tw-object-contain'
+              alt='Logo'
+            />
+          </div>
+        </Link>
+
+        <ul className='tw-list-none tw-flex tw-justify-between tw-items-center tw-gap-6'>
           {/* เพิ่มลิงก์ Problems และ Contests */}
           <li>
             <Link
               className={`tw-py-2 tw-px-4 ${colorMode === 'dark' ? 'tw-text-white' : ''}`}
-              underline="hover"
+              underline='hover'
               component={ReactLink}
-              to="/problems"
+              to='/problems'
             >
               Problems
             </Link>
@@ -74,31 +77,31 @@ export default function HomeNavbar() {
           <li>
             <Link
               className={`tw-py-2 tw-px-4 ${colorMode === 'dark' ? 'tw-text-white' : ''}`}
-              underline="hover"
+              underline='hover'
               component={ReactLink}
-              to="/contests"
+              to='/contests'
             >
               Contests
             </Link>
           </li>
           {/* ส่วน Sign in/Sign up หรือ Profile */}
-          <li className="tw-flex tw-justify-center tw-items-center">
+          <li className='tw-flex tw-justify-center tw-items-center'>
             {!isLogedIn ? (
-              <div className="tw-flex tw-justify-between tw-items-center tw-gap-2">
+              <div className='tw-flex tw-justify-between tw-items-center tw-gap-2'>
                 <Link
                   className={`tw-py-2 tw-px-4 ${colorMode === 'dark' ? 'tw-text-white' : ''}`}
-                  underline="hover"
+                  underline='hover'
                   component={ReactLink}
-                  to="/signin"
+                  to='/signin'
                 >
                   Sign in
                 </Link>
                 <span>or</span>
                 <Link
                   className={`tw-py-2 tw-px-4 ${colorMode === 'dark' ? 'tw-text-white' : ''}`}
-                  underline="hover"
+                  underline='hover'
                   component={ReactLink}
-                  to="/signup"
+                  to='/signup'
                 >
                   Sign up
                 </Link>
@@ -111,15 +114,11 @@ export default function HomeNavbar() {
           <li>
             <Button
               className={colorMode === 'dark' ? 'tw-border-white' : ''}
-              variant="text"
+              variant='text'
               onClick={toggleColorMode}
-              size="large"
+              size='large'
             >
-              {colorMode === 'dark' ? (
-                <LightModeOutlinedIcon sx={{ color: 'white' }} />
-              ) : (
-                <DarkModeIcon />
-              )}
+              {colorMode === 'dark' ? <LightModeOutlinedIcon sx={{ color: 'white' }} /> : <DarkModeIcon />}
             </Button>
           </li>
         </ul>
@@ -128,7 +127,7 @@ export default function HomeNavbar() {
       {/* Banner สำหรับ Contest */}
       {activeContest && !isLoading && (
         <Box
-          className="tw-container-lg tw-mx-auto tw-p-4"
+          className='tw-container-lg tw-mx-auto tw-p-4'
           sx={{
             background: 'linear-gradient(45deg, #ff6b6b, #ff8e53)',
             borderRadius: '8px',
@@ -138,7 +137,7 @@ export default function HomeNavbar() {
           }}
         >
           <Typography
-            variant="h6"
+            variant='h6'
             sx={{
               color: '#fff',
               fontWeight: 'bold',
@@ -154,7 +153,7 @@ export default function HomeNavbar() {
           <Button
             component={ReactLink}
             to={`/contests/${activeContest._id}`}
-            variant="contained"
+            variant='contained'
             sx={{
               mt: 1,
               backgroundColor: '#fff',
