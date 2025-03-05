@@ -67,7 +67,7 @@ export default function ProblemsSetAdmin() {
       timeLimit: 1000,
       memoryLimit: 512,
     },
-    contestId: '',
+    contest: '',
     points: 0,
   });
   const [updateformData, setUpdateFormData] = useState<Problem>({
@@ -82,7 +82,7 @@ export default function ProblemsSetAdmin() {
       timeLimit: 1000,
       memoryLimit: 512,
     },
-    contestId: '',
+    contest: '',
     points: 0,
   });
 
@@ -144,7 +144,7 @@ export default function ProblemsSetAdmin() {
           timeLimit: 1000,
           memoryLimit: 512,
         },
-        contestId: '',
+        contest: '',
         points: 0,
       });
     },
@@ -170,7 +170,7 @@ export default function ProblemsSetAdmin() {
         timeLimit: 1000,
         memoryLimit: 512,
       },
-      contestId: '',
+      contest: '',
       points: 0,
     });
     setCreateModalOpen(true);
@@ -653,8 +653,8 @@ export default function ProblemsSetAdmin() {
           <TextField
             fullWidth
             label='Contest ID'
-            value={updateformData.contestId ?? ''} // Handle null/undefined
-            onChange={(e) => setUpdateFormData({ ...updateformData, contestId: e.target.value || null })}
+            value={updateformData.contest ?? ''} // Handle null/undefined
+            onChange={(e) => setUpdateFormData({ ...updateformData, contest: e.target.value || null })}
             variant='outlined'
           />
         </DialogContent>
@@ -735,8 +735,8 @@ export default function ProblemsSetAdmin() {
           <TextField
             fullWidth
             label='Contest ID'
-            value={formData.contestId ?? ''} // Handle null/undefined
-            onChange={(e) => setFormData({ ...formData, contestId: e.target.value || null })}
+            value={formData.contest ?? ''} // Handle null/undefined
+            onChange={(e) => setFormData({ ...formData, contest: e.target.value || null })}
             variant='outlined'
           />
 
