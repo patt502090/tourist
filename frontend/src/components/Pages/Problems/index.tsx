@@ -39,7 +39,7 @@ export default function ProblemsSet() {
   const user = useUserSlice((state) => state.user);
 
   const problems = useMemo(() => {
-    return allProblems.filter((problem) => !problem.contestId || problem.contestId === '');
+    return allProblems.filter((problem) => !problem.contest || problem.contest == ""); 
   }, [allProblems]);
   
 

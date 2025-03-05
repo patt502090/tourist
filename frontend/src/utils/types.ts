@@ -26,7 +26,7 @@ export interface Problem {
   imports?: { lang_id: number; code: string }[];
   metadata: metadata;
   languagestoskip?: number[];
-  contestId?: string | null;
+  contest?: string | null;
   points?: number;
 }
 

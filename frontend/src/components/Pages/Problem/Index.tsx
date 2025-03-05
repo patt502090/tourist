@@ -431,10 +431,10 @@ export default function Problem() {
           },
         ],
       });
-      if (problemInfo?.contestId) {
-        console.log('Submitting to contest:', problemInfo.contestId);
+      if (problemInfo?.contest) {
+        console.log('Submitting to contest:', problemInfo.contest);
         await updateContestProblemMutation.mutateAsync({
-          contestId: problemInfo.contestId,
+          contestId: problemInfo.contest,
           userId: user?._id as string,
           problemId: problemname?.slice(0, 24) as string,
           status: status ? 'Accepted' : 'Wrong Answer',
