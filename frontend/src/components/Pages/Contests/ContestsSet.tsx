@@ -272,15 +272,15 @@ export default function ContestsSet() {
   return (
     <Box sx={{ padding: '20px' }}>
       {/* Header */}
-      <Typography
+      {/* <Typography
         variant='h4'
         sx={{
-          fontWeight: 700,
+          fontWeight: 600,
           color: 'text.primary',
           marginBottom: '20px',
           textAlign: 'center',
           fontFamily: "'Roboto Slab', 'Poppins', serif", // Refined font stack
-          letterSpacing: '0.5px', // Subtle spacing for elegance
+          letterSpacing: '0.2px', // Subtle spacing for elegance
           textShadow: (theme) => (
             theme.palette.mode === 'dark'
               ? '0 2px 4px rgba(255, 105, 180, 0.3)'  // Cyberpunk neon glow
@@ -299,8 +299,8 @@ export default function ContestsSet() {
           ),
         }}
       >
-        List of Competitions
-      </Typography>
+        Contests
+      </Typography> */}
 
       {/* Contests Table */}
       <ContestsTable

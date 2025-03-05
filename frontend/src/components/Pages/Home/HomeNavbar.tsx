@@ -9,7 +9,8 @@ import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import DarkModeIcon from '@mui/icons-material/DarkModeOutlined';
 import Profile from '../../UI/Profile';
 import getContests from '../../../services/getContests';
-
+import code from './code.json';
+import Lottie from 'react-lottie';
 // กำหนด interface สำหรับ Contest
 interface Contest {
   _id: string;
@@ -61,7 +62,6 @@ export default function HomeNavbar() {
             />
           </div>
         </Link>
-
         <ul className='tw-list-none tw-flex tw-justify-between tw-items-center tw-gap-6'>
           {/* เพิ่มลิงก์ Problems และ Contests */}
           <li>
@@ -136,7 +136,17 @@ export default function HomeNavbar() {
             animation: 'pulse 2s infinite',
           }}
         >
+          <Lottie
+            options={{
+              loop: true,
+              autoplay: true,
+              animationData: code,
+            }}
+            height={100}
+            width={100}
+          />
           <Typography
+            className='mt-2'
             variant='h6'
             sx={{
               color: '#fff',
@@ -167,7 +177,7 @@ export default function HomeNavbar() {
       )}
 
       {/* CSS Animation */}
-      <style>
+      {/* <style>
         {`
           @keyframes pulse {
             0% { transform: scale(1); }
@@ -175,7 +185,7 @@ export default function HomeNavbar() {
             100% { transform: scale(1); }
           }
         `}
-      </style>
+      </style> */}
     </>
   );
 }

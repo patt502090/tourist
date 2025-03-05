@@ -9,6 +9,7 @@ import { useAuthSlice } from '../../../store/authslice/auth';
 import { useUserSlice } from '../../../store/user';
 import ProblemsSetAdmin from '../../ProblemsAdmin';
 
+
 function Home() {
   const isLogedIn = useAuthSlice((state) => state.isLogedIn);
   const user = useUserSlice((state) => state.user);
@@ -32,6 +33,7 @@ function Home() {
     <>  
       <HomeNavbar />
       <main className='tw-mt-12'>{user?.roles.includes('admin') ? <ProblemsSetAdmin /> : <ProblemsSet />}</main>
+     
       <Footer />
     </>
   );

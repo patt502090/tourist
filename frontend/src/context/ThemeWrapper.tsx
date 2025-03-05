@@ -42,7 +42,7 @@ const ThemeWrapper: FC<contextWrapperProps> = ({ children }) => {
       },
     },
     typography: {
-      fontFamily: "'Orbitron', 'Roboto', sans-serif", // ฟอนต์แนว futuristic
+      fontFamily: "'Poppins', 'Roboto', sans-serif", // เปลี่ยนเป็น Poppins, fallback ด้วย Roboto
       button: {
         textTransform: 'uppercase', // ปุ่มตัวพิมพ์ใหญ่ให้ดูเด่น
         fontWeight: 700, // หนาๆ
