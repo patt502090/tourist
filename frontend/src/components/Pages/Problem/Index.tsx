@@ -361,12 +361,13 @@ export default function Problem() {
     }
 
     const submissionBatch = testcases.map(({ input, output }, i) => {
+      // If output is missing, compute it for palindrome logic
       let expectedOutput = output?.trim();
       if (!expectedOutput) {
         console.warn(`Testcase ${i} has no expected output in problemInfo, computing locally`);
-        const inputStr = input?.replace(/"/g, '') || '';
+        const inputStr = input?.replace(/"/g, '') || ''; // Remove quotes (e.g., "madam" -> madam)
         const isPalindrome = inputStr === inputStr.split('').reverse().join('');
-        expectedOutput = isPalindrome ? 'True' : 'False';
+        expectedOutput = isPalindrome ? 'True' : 'False'; // Python boolean as string
       }
       console.log(`Testcase ${i} input: ${input}, expected_output: ${expectedOutput}`);
 
@@ -752,21 +753,23 @@ export default function Problem() {
                     ></Tab>
                   ))}
                 </Tabs>
-                {problemInfo?.metadata.variables_names != undefined
-                  ? problemRunStatus.map((s, i) => {
-                      const inputvalues = s.stdin.split('\n');
-                      return (
-                        <CustomTabPanel index={i} key={`language${s.language_id}`} value={submissionTab}>
-                          <ProblemResults
-                            inputValues={inputvalues}
-                            variables={Object.values(problemInfo?.metadata.variables_names ?? {})}
-                            standardOutput={s.stdout}
-                            expectedOutput={s.expected_output}
-                          />
-                        </CustomTabPanel>
-                      );
-                    })
-                  : null}
+                {problemInfo?.metadata?.variables_names ? (
+                  problemRunStatus.map((s, i) => {
+                    const inputvalues = s.stdin.split('\n');
+                    return (
+                      <CustomTabPanel index={i} key={`language${s.language_id}`} value={submissionTab}>
+                        <ProblemResults
+                          inputValues={inputvalues}
+                          variables={Object.values(problemInfo.metadata.variables_names || {})}
+                          standardOutput={s.stdout}
+                          expectedOutput={s.expected_output}
+                        />
+                      </CustomTabPanel>
+                    );
+                  })
+                ) : (
+                  <Typography variant='body2'>No test case variables available</Typography>
+                )}
               </Stack>
             ) : (
               <div className='tw-h-[75dvh]'>
